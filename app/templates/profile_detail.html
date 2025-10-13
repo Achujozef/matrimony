@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row g-4">
+    <!-- Left Column: Photos + Actions -->
+    <div class="col-12 col-md-5">
+      <!-- Photo Carousel -->
+      <!-- Photos -->
+<div class="profile-photos card-rounded shadow-sm overflow-hidden">
+  {% if profile_obj.photos.all %}
+    <div id="profileCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        {% for photo in profile_obj.photos.all %}
+          <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            {% if mutual_interest or forloop.first %}
+              <img src="{{ photo.image.url }}" class="d-block w-100" style="object-fit:cover;height:320px;">
+            {% else %}
+              <img src="{{ photo.image.url }}" class="d-block w-100 blurred" style="object-fit:cover;height:320px;">
+              <div class="photo-overlay d-flex flex-column justify-content-center align-items-center">
+                <p class="mb-2">Private photo — visible after Match</p>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#profileCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#profileCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  {% else %}
+    <div class="d-flex justify-content-center align-items-center" style="height:320px;background:linear-gradient(180deg,#f6fbff,#fff);">
+      <span class="fw-bold text-muted">No Photos</span>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Interest / Contact -->
+<div class="mt-3 card-rounded p-3 shadow-sm">
+  {% if user.is_authenticated %}
+    {% if mutual_interest %}
+      <div class="alert alert-success text-center">It's a Match 🎉</div>
+      <div class="p-3 border rounded bg-light">
+        <h6 class="fw-bold">Contact Details</h6>
+        <p><strong>Phone:</strong> {{ profile_obj.profile_owner.phone }}</p>
+        <p><strong>Email:</strong> {{ profile_obj.profile_owner.user.email }}</p>
+      </div>
+    {% elif has_expressed %}
+      <button class="btn btn-secondary w-100" disabled>Interest Sent (Waiting)</button>
+    {% else %}
+      <button id="interestBtn" class="btn btn-primary w-100">Express Interest</button>
+    {% endif %}
+  {% else %}
+    <a href="{% url 'login' %}" class="btn btn-primary w-100">Login to Express Interest</a>
+  {% endif %}
+</div>
+
+
+    <!-- Right Column: Profile Info -->
+    <div class="col-12 col-md-7">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+        <div>
+          <h3 class="mb-1">{{ profile_obj.full_name }}</h3>
+          <div class="text-muted">{{ profile_obj.age }} yrs · {{ profile_obj.get_gender_display }}</div>
+        </div>
+        <div class="text-end">
+          <div class="badge-shakha mb-1">
+            {% if profile_obj.shakha %}{{ profile_obj.shakha.name }}{% else %}NoShakha{% endif %}
+          </div>
+          {% if profile_obj.status == 'A' %}
+            <div class="badge bg-success">Verified</div>
+          {% else %}
+            <div class="badge bg-secondary">Pending</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="small-muted">Education</div>
+          <div class="fw-semibold">{{ profile_obj.education|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Occupation</div>
+          <div class="fw-semibold">{{ profile_obj.occupation|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Native Place</div>
+          <div class="fw-semibold">{{ profile_obj.native_place|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Religion</div>
+          <div class="fw-semibold">{{ profile_obj.religion|default:"-" }}</div>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="mt-4">
+        <h5>About</h5>
+        <p>{{ profile_obj.about|default:"No details provided." }}</p>
+      </div>
+
+      <!-- Interest Alerts -->
+      {% if mutual_interest %}
+        <div class="alert alert-success mt-3">It's a Match! 🎉</div>
+      {% elif viewer_sent_interest %}
+        <div class="alert alert-warning mt-3">Interest Sent. Waiting for response.</div>
+      {% endif %}
+
+      <!-- Last Active -->
+      <div class="mt-3 text-muted small">Last active: {{ profile_obj.updated_at|timesince }} ago</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.profile-photos img {
+  border-radius: 12px;
+}
+.blurred {
+  filter: blur(8px);
+}
+.photo-overlay {
+  position:absolute;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  color:#fff;
+  text-align:center;
+}
+.card-rounded {
+  border-radius: 12px;
+}
+.badge-shakha {
+  background: var(--brand,#007bff);
+  color:#fff;
+  padding:3px 8px;
+  border-radius: 8px;
+  font-size:0.8rem;
+}
+</style>
+{% endblock %}

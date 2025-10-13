@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard — Kerala Vishwakarma{% endblock %}
+
+{% block head %}
+<style>
+  :root{ --brand:#0b5ed7; --muted:#6c757d; --surface:#ffffff; --radius:12px; }
+
+  .container-max { max-width:1150px; margin:0 auto; padding: 1rem; }
+  .grid-2 { display:grid; grid-template-columns: 300px 1fr; gap:1rem; align-items:start; }
+  @media (max-width: 991px){ .grid-2{ grid-template-columns: 1fr; } }
+
+  .side-panel { background:var(--surface); padding:1rem; border-radius: var(--radius); box-shadow: 0 8px 24px rgba(8,35,85,0.06); position:sticky; top:86px; }
+  .stat { display:flex; align-items:center; gap:.75rem; padding:.75rem; border-radius:10px; background:linear-gradient(180deg,#fff,#fbfbff); box-shadow: 0 6px 14px rgba(8,35,85,0.04); }
+
+  .profile-card { border-radius:12px; overflow:hidden; transition: transform .14s ease, box-shadow .14s ease; background:var(--surface); display:flex; flex-direction:column; }
+  .profile-card:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(2,6,23,0.12); }
+  .profile-photo { height:180px; width:100%; object-fit:cover; display:block; }
+
+  .badge-shakha { background: #eef6ff; color: var(--brand); font-weight:600; border-radius:8px; padding:.25rem .5rem; }
+
+  .small-muted { color:var(--muted); font-size:.92rem; }
+  .chip { background:#f1f6ff; color:var(--brand); padding:.28rem .6rem; border-radius:999px; font-weight:600; font-size:.85rem; display:inline-block; margin-right:.4rem; margin-bottom:.4rem; }
+
+  .featured-card { min-height:220px; display:flex; align-items:center; justify-content:center; color:#fff; border-radius:10px; background: linear-gradient(135deg, var(--brand), #084298); }
+
+  .info-box { padding:.9rem; border-radius:10px; background:linear-gradient(180deg,#fbfdff,#f7fbff); border:1px solid #eef6ff; }
+
+  .btn-group-center { display:flex; justify-content:center; gap:.5rem; flex-wrap:wrap; }
+
+  @media (max-width:991px){
+    .profile-photo{ height:140px; }
+    .stat { flex-direction:column; align-items:flex-start; gap:.2rem; }
+    .btn-group-center { justify-content:flex-start; }
+    .profile-card, .featured-card, .info-box, .side-panel { background:var(--surface) !important; }
+    /* Mobile filter dropdown */
+    .mobile-filters-container { display:block; position:sticky; top:0; background:var(--surface); z-index:999; padding:0.5rem 1rem; border-bottom:1px solid #ddd; }
+    .mobile-filters-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:.5rem 1rem; font-weight:600; border:1px solid #ccc; border-radius:8px; background:#f8f9fa; cursor:pointer; }
+    .mobile-filters-panel { display:none; margin-top:0.5rem; padding:0.5rem 0; border-radius:8px; background:var(--surface); box-shadow:0 4px 10px rgba(0,0,0,0.05); }
+    .mobile-filters-panel.show { display:block; }
+  }
+
+  /* Popup / Modal */
+  .modal-body-scroll { max-height: 60vh; overflow-y: auto; }
+
+</style>
+<style>
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 28px rgba(0,0,0,0.12);
+}
+
+.profile-card img:hover {
+  transform: scale(1.05);
+  transition: transform 0.4s;
+}
+
+@media (max-width: 576px) {
+  .profile-card {
+    flex-direction: column;
+  }
+  .profile-card .d-flex.flex-wrap {
+    flex-direction: column !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-max">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-3">
+    <div>
+      <h3 class="m-0">Explore Profiles</h3>
+      <small class="small-muted">Verified community matches from your selected shakha and beyond.</small>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+      {% if user.is_authenticated %}
+        <a href="#" class="btn btn-primary">My Profile</a>
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#interestsModal">Interests</button>
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#notificationsModal">Notifications</button>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary">Login / Register</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Mobile Filter Dropdown -->
+  <div class="mobile-filters-container d-md-none mb-2">
+    <div class="mobile-filters-btn" id="mobileFiltersToggle">
+      <span>Filters</span>
+      <span id="mobileFiltersArrow">▼</span>
+    </div>
+    <div class="mobile-filters-panel" id="mobileFiltersPanel">
+      <form id="filtersFormMobile" method="get">
+        <div class="mb-2">
+          <input type="search" name="q" placeholder="Search name / edu / job" class="form-control" value="{{ filters.q|default:'' }}">
+        </div>
+        <div class="row gx-2">
+          <div class="col-6 mb-2">
+            <select name="shakha" class="form-select">
+              <option value="">Shakha</option>
+              {% for s in shakhas %}
+                <option value="{{ s.id }}" {% if filters.shakha == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="row gx-2">
+          <div class="col-6 mb-2"><input name="min_age" class="form-control" placeholder="Min age" value="{{ filters.min_age|default:'' }}"></div>
+          <div class="col-6 mb-2"><input name="max_age" class="form-control" placeholder="Max age" value="{{ filters.max_age|default:'' }}"></div>
+        </div>
+        <div class="mb-2">
+          <select name="order" class="form-select">
+            <option value="recent" {% if filters.order == 'recent' %}selected{% endif %}>Newest</option>
+            <option value="age_asc" {% if filters.order == 'age_asc' %}selected{% endif %}>Age ↑</option>
+            <option value="age_desc" {% if filters.order == 'age_desc' %}selected{% endif %}>Age ↓</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2 mb-2">
+          <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Sidebar -->
+    <aside class="side-panel d-none d-md-block">
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="m-0">Filters</h6>
+          <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('filtersPanel').classList.toggle('d-none')">Show / Hide</button>
+        </div>
+
+        <div id="filtersPanel" class="mt-2">
+          <form id="filtersForm" method="get">
+            <div class="mb-2">
+              <input type="search" name="q" placeholder="Search name / edu / job" class="form-control" value="{{ filters.q|default:'' }}">
+            </div>
+
+            <div class="row gx-2">
+              <div class="col-12 mb-2">
+                <select name="shakha" class="form-select">
+                  <option value="">Shakha</option>
+                  {% for s in shakhas %}
+                    <option value="{{ s.id }}" {% if filters.shakha == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row gx-2">
+              <div class="col-6 mb-2"><input name="min_age" class="form-control" placeholder="Min age" value="{{ filters.min_age|default:'' }}"></div>
+              <div class="col-6 mb-2"><input name="max_age" class="form-control" placeholder="Max age" value="{{ filters.max_age|default:'' }}"></div>
+            </div>
+
+            <div class="mb-2">
+              <select name="order" class="form-select">
+                <option value="recent" {% if filters.order == 'recent' %}selected{% endif %}>Newest</option>
+                <option value="age_asc" {% if filters.order == 'age_asc' %}selected{% endif %}>Age ↑</option>
+                <option value="age_desc" {% if filters.order == 'age_desc' %}selected{% endif %}>Age ↓</option>
+              </select>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <hr/>
+
+      <!-- Stats -->
+      <div class="mb-3">
+        <h6 class="mb-2">Community Overview</h6>
+        <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:var(--brand)">{{ stats.total_profiles|default:0 }}</div><div class="small-muted">Profiles</div></div>
+        <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:#28a745">{{ stats.verified|default:0 }}</div><div class="small-muted">Verified</div></div>
+        <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:#ffc107">{{ stats.pending|default:0 }}</div><div class="small-muted">Pending</div></div>
+      </div>
+
+      <hr/>
+
+      <div class="info-box">
+        <h6 class="mb-1">Security & Privacy</h6>
+        <p class="small-muted mb-1">Registrations are verified by Shakha presidents. Phone & photos are hidden until you choose to reveal or connect.</p>
+        <ul class="small-muted" style="padding-left:1.1rem">
+          <li>OTP and email verification</li>
+          <li>Profile moderation — reports reviewed within 48 hours</li>
+          <li>Data stored securely; only approved profiles are public</li>
+        </ul>
+      </div>
+
+      <hr/>
+
+      <div>
+        <h6 class="mb-2">Quick filters</h6>
+        <a class="chip" href="?order=recent">Newest</a>
+        <div class="small-muted mt-2">Save searches (coming soon).</div>
+      </div>
+
+      <hr/>
+
+      <div>
+        <h6 class="mb-2">Quotes</h6>
+        <blockquote class="small-muted fst-italic">"Trust, respect, and connection build a lasting community."</blockquote>
+        <blockquote class="small-muted fst-italic">"Your profile is your story — make it meaningful."</blockquote>
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+
+      {% if user.is_authenticated %}
+          {% if is_premium %}
+          <div class="card card-rounded p-3 mb-3" style="background:linear-gradient(180deg,#e0f0ff,#ffffff);">
+              <h6 class="mb-2">Welcome Premium Subscriber!</h6>
+              <p class="small-muted mb-2">You are our premium subscriber now. Enjoy unlimited connections, instant access to photos & phones, and featured placement.</p>
+          </div>
+          {% else %}
+          <div class="card card-rounded p-3 mb-3" style="background:linear-gradient(180deg,#e0f0ff,#ffffff);">
+              <h6 class="mb-2">Premium Benefits</h6>
+              <ul class="small-muted mb-2">
+                  <li>Express interest to unlimited profiles</li>
+                  <li>See phone & photos instantly</li>
+                  <li>Featured placement on top search results</li>
+                  <li>Exclusive notifications & filters</li>
+              </ul>
+              <a href="#" class="btn btn-primary btn-sm w-100">Go Premium Now</a>
+          </div>
+          {% endif %}
+      {% endif %}
+
+{% if featured_profiles %}
+<div class="card-rounded p-3 mb-4" style="background:linear-gradient(135deg, #f5f7fa, #e4ebf7); box-shadow: 0 12px 28px rgba(0,0,0,0.08); border-radius:16px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <strong style="font-size:1.25rem; color:#0b5ed7;">Featured Profiles</strong>
+      <div class="small-muted" style="color:#6c757d;">Hand-picked by presidents</div>
+    </div>
+    <div class="small-muted" style="color:#6c757d; font-size:0.85rem;">Auto rotate · Tap to view</div>
+  </div>
+
+  <div id="featuredCarousel" class="carousel slide position-relative" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for fp in featured_profiles %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          <div class="featured-card p-3 d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between" 
+               style="background: linear-gradient(145deg, #ffffff, #f1f5fb); border-radius:14px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s; flex-wrap:wrap;">
+            
+            <!-- Profile Info -->
+            <div style="flex:1; min-width:180px;">
+              <div style="font-size:1.2rem; font-weight:700; color:#0b5ed7;">{{ fp.full_name }}</div>
+              <div class="small-muted" style="color:#495057; font-weight:500;">{{ fp.native_place }} · {{ fp.get_gender_display }}</div>
+              <div class="mt-1 small-muted" style="color:#6c757d;">{{ fp.education|default:"-" }} · {{ fp.occupation|default:"-" }}</div>
+              
+              <div class="mt-3 btn-group-center d-flex flex-wrap gap-2">
+                <a href="{% url 'profile_detail' fp.pk %}" class="btn btn-outline-primary btn-sm flex-grow-1" style="font-weight:600; min-width:100px;">View Profile</a>
+                {% if user.is_authenticated %}
+                  {% if is_premium %}
+                    {% if fp.pk in sent_interests %}
+                      <button class="btn btn-sm btn-secondary flex-grow-1" disabled style="min-width:100px;">Sent</button>
+                    {% else %}
+                      <button class="btn btn-sm btn-primary js-interest flex-grow-1" data-id="{{ fp.pk }}" style="min-width:100px;">Interest</button>
+                    {% endif %}
+                  {% else %}
+                    <button class="btn btn-sm btn-primary flex-grow-1" disabled style="min-width:100px;">Express Interest</button>
+                    <small class="d-block text-center mt-1 text-muted" style="font-size:0.75rem;">Go Premium to connect instantly!</small>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Profile Photo -->
+            <div style="width:220px; min-width:180px; height:140px; flex-shrink:0;">
+              {% if fp.photos.all %}
+                <img src="{{ fp.photos.all.0.image.url }}" alt="{{ fp.full_name }}" 
+                     style="height:140px;width:100%;object-fit:cover;border-radius:12px;box-shadow: 0 6px 16px rgba(0,0,0,0.1);">
+              {% else %}
+                <div style="height:140px;width:100%; border-radius:12px; background:linear-gradient(135deg,#e9efff,#dbe5fc); display:grid; place-items:center; color:#0b5ed7; font-weight:700; font-size:1.5rem;">
+                  {{ fp.full_name|slice:":1" }}
+                </div>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Carousel Controls -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev" 
+            style="width:40px; height:40px; top:50%; transform:translateY(-50%); left:-10px; z-index:5;">
+      <span class="carousel-control-prev-icon" style="background-color:#0b5ed7; border-radius:50%; padding:8px;"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next" 
+            style="width:40px; height:40px; top:50%; transform:translateY(-50%); right:-10px; z-index:5;">
+      <span class="carousel-control-next-icon" style="background-color:#0b5ed7; border-radius:50%; padding:8px;"></span>
+    </button>
+  </div>
+</div>
+{% endif %}
+
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div><h5 class="m-0">Profiles</h5><small class="small-muted">{{ page_obj.paginator.count|default:0 }} results</small></div>
+      </div>
+
+      <div class="row g-4">
+  {% for prof in page_obj.object_list %}
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="profile-card card-rounded shadow-sm" 
+           style="background: linear-gradient(145deg, #ffffff, #f7f9fc); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; transition: transform 0.3s, box-shadow 0.3s;">
+        
+        <!-- Profile Photo -->
+        <div class="position-relative" style="overflow:hidden; border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
+          {% if prof.photos.all %}
+            <img src="{{ prof.photos.all.0.image.url }}" alt="{{ prof.full_name }}" 
+                 style="width:100%; height:220px; object-fit:cover; transition: transform 0.4s;">
+          {% else %}
+            <div style="width:100%; height:220px; display:grid; place-items:center; font-size:2rem; font-weight:700; color:#0b5ed7; background:linear-gradient(180deg,#e0f0ff,#dbe5fc);">
+              {{ prof.full_name|slice:":1" }}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Profile Info -->
+        <div class="p-3 d-flex flex-column flex-grow-1" style="flex:1;">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <a href="{% url 'profile_detail' prof.pk %}" 
+                 style="font-size:1.1rem; font-weight:700; color:#0b5ed7; text-decoration:none;">{{ prof.full_name }}</a>
+              <div class="small-muted" style="color:#495057; font-weight:500;">{{ prof.age }} yrs · {{ prof.get_gender_display }}</div>
+            </div>
+            <div class="text-end">
+              <div class="badge-shakha mb-1" style="background:#e0f0ff; color:#0b5ed7; font-weight:600; font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:12px;">
+                {% if prof.shakha %}{{ prof.shakha.name }}{% else %}NoShakha{% endif %}
+              </div>
+              {% if prof.status == 'A' %}
+                <div class="badge bg-success" style="font-size:0.75rem;">Verified</div>
+              {% else %}
+                <div class="badge bg-secondary" style="font-size:0.75rem;">Pending</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mt-2 small-muted" style="color:#6c757d; font-weight:500;">Education</div>
+          <div class="fw-semibold mb-2" style="color:#343a40;">{{ prof.education|default:"-" }}</div>
+
+          <!-- Buttons -->
+          <div class="mt-3 d-flex flex-wrap gap-2 justify-content-center">
+            <a href="{% url 'profile_detail' prof.pk %}" 
+               class="btn btn-outline-primary btn-sm flex-grow-1" style="min-width:100px; font-weight:600;">View</a>
+
+            {% if user.is_authenticated and user.profile %}
+                {% if is_premium %}
+                    {% if prof.pk in sent_interests %}
+                        <button class="btn btn-sm btn-secondary flex-grow-1" disabled style="min-width:100px;">Sent</button>
+                    {% else %}
+                        <button class="btn btn-sm btn-primary js-interest flex-grow-1" data-id="{{ prof.pk }}" style="min-width:100px;">Interest</button>
+                    {% endif %}
+                {% else %}
+                    <button class="btn btn-sm btn-primary flex-grow-1" disabled style="min-width:100px;">Express Interest</button>
+                    <small class="d-block text-center mt-1 text-muted" style="font-size:0.75rem;">Go Premium to connect instantly!</small>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-primary flex-grow-1" style="min-width:100px;">Connect</a>
+            {% endif %}
+          </div>
+
+          <div class="mt-3 small-muted text-center" style="font-size:0.75rem; color:#6c757d;">Last active: {{ prof.updated_at|timesince }} ago</div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="card-rounded p-3" style="background:#f8f9fa; text-align:center;">No profiles found matching your filters.</div>
+    </div>
+  {% endfor %}
+</div>
+      <!-- Pagination -->
+      <div class="mt-4 d-flex justify-content-center">
+        {% if page_obj.has_other_pages %}
+          <nav>
+            <ul class="pagination">
+              {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Previous</a></li>{% endif %}
+              {% for p in page_obj.paginator.page_range %}
+                {% if p >= page_obj.number|add:-2 and p <= page_obj.number|add:2 %}
+                  <li class="page-item {% if p == page_obj.number %}active{% endif %}"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                {% endif %}
+              {% endfor %}
+              {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Next</a></li>{% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Interests Modal -->
+<div class="modal fade" id="interestsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Received Interests</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body modal-body-scroll">
+        {% if received_interests %}
+          <ul class="list-unstyled">
+            {% for interest in received_interests %}
+              <li class="d-flex align-items-center mb-3 p-2 border rounded" 
+                    id="interest-{{ interest.id }}">
+                <!-- Profile Image -->
+                <img src="{% if interest.from_profile.matrimonial_profile.photos.first %}{{ interest.from_profile.matrimonial_profile.photos.first.image.url }}{% else %}{% static 'img/default-user.png' %}{% endif %}" 
+                     class="rounded-circle me-3" alt="Profile" width="50" height="50">
+
+                <!-- Profile Info -->
+                <div class="flex-grow-1">
+                  <strong>{{ interest.from_profile.matrimonial_profile.full_name|default:interest.from_profile.user.username }}</strong>
+                  <br>
+                  <small class="text-muted">Sent on {{ interest.created_at|date:"M d, Y" }}</small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div>
+                  <a href="{% url 'profile_detail' interest.from_profile.matrimonial_profile.id %}" 
+                     class="btn btn-sm btn-outline-primary me-1">View Profile</a>
+
+                    <button type="button" 
+                            class="btn btn-sm btn-success action-btn"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#confirmActionModal"
+                            data-action="accept"
+                            data-url="{% url 'accept_interest' interest.id %}"
+                            data-name="{{ interest.from_profile.matrimonial_profile.full_name }}">
+                      Accept
+                    </button>
+
+                    <button type="button" 
+                            class="btn btn-sm btn-danger action-btn"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#confirmActionModal"
+                            data-action="reject"
+                            data-url="{% url 'reject_interest' interest.id %}"
+                            data-name="{{ interest.from_profile.matrimonial_profile.full_name }}">
+                      Reject
+                    </button>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No interests received yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- One reusable confirmation modal -->
+<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmActionTitle">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="confirmActionBody">
+        <!-- JS fills message -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="confirmActionForm" method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" id="confirmActionBtn" class="btn">Confirm</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Notifications Modal -->
+<div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Notifications</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body modal-body-scroll">
+        <p class="small-muted">Your notifications will appear here (coming soon).</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+      const cookie = c.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.js-interest').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const pk = this.dataset.id;
+      const btnEl = this;
+      btnEl.disabled = true;
+      fetch("{% url 'express_interest' 0 %}".replace('/0/','/'+pk+'/'), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      }).then(r => r.json()).then(json=>{
+        if(json && json.success){
+          showToast(json.message || 'Interest sent', 'success');
+          btnEl.textContent = 'Sent';
+        } else {
+          showToast(json.error || 'Could not send', 'danger');
+          btnEl.disabled = false;
+        }
+      }).catch(err=>{
+        console.error(err);
+        showToast('Network error', 'danger');
+        btnEl.disabled = false;
+      });
+    });
+  });
+
+  // Mobile filter toggle
+  const mobileToggle = document.getElementById('mobileFiltersToggle');
+  const mobilePanel = document.getElementById('mobileFiltersPanel');
+  const arrow = document.getElementById('mobileFiltersArrow');
+  if(mobileToggle){
+    mobileToggle.addEventListener('click', ()=>{
+      mobilePanel.classList.toggle('show');
+      arrow.textContent = mobilePanel.classList.contains('show') ? '▲' : '▼';
+    });
+  }
+});
+
+function showToast(msg, type='danger', ttl=3500){
+  const holder = document.getElementById('serverToasts');
+  if(!holder){ alert(msg); return; }
+  const tpl = document.createElement('div');
+  tpl.className = `toast align-items-center text-bg-${type} border-0 mb-2`;
+  tpl.setAttribute('role','alert'); tpl.setAttribute('aria-live','assertive'); tpl.setAttribute('aria-atomic','true');
+  tpl.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+  holder.appendChild(tpl);
+  try { new bootstrap.Toast(tpl, { delay: ttl }).show(); } catch(e){ console.warn(e); }
+  tpl.addEventListener('hidden.bs.toast', ()=> tpl.remove());
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const confirmModal = document.getElementById("confirmActionModal");
+  const confirmForm = document.getElementById("confirmActionForm");
+  const confirmBtn = document.getElementById("confirmActionBtn");
+  const confirmBody = document.getElementById("confirmActionBody");
+  const confirmTitle = document.getElementById("confirmActionTitle");
+
+  confirmModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget;
+    const action = button.getAttribute("data-action");
+    const url = button.getAttribute("data-url");
+    const name = button.getAttribute("data-name");
+    const interestId = button.closest("li").id; // "interest-123"
+
+    confirmTitle.textContent = 
+      action === "accept" ? "Accept Interest" : "Reject Interest";
+    confirmBody.textContent = 
+      `Are you sure you want to ${action} interest from ${name}?`;
+
+    confirmForm.action = url;
+    confirmForm.dataset.interestId = interestId; // attach id
+    confirmBtn.className = "btn " + 
+      (action === "accept" ? "btn-success" : "btn-danger");
+    confirmBtn.textContent = 
+      action === "accept" ? "Accept" : "Reject";
+  });
+
+  // Handle AJAX submit
+  confirmForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    fetch(confirmForm.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+      },
+      body: new FormData(confirmForm)
+    })
+    .then(r => {
+      if (!r.ok) throw new Error("Request failed");
+      return r.json();
+    })
+    .then(data => {
+      // Remove interest instantly
+      const li = document.getElementById(confirmForm.dataset.interestId);
+      if (li) li.remove();
+
+      // Close modal
+      const bsModal = bootstrap.Modal.getInstance(confirmModal);
+      bsModal.hide();
+    })
+    .catch(err => {
+      alert("Error: " + err.message);
+    });
+  });
+});
+
+</script>
+
+{% endblock %}
