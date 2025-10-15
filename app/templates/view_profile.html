@@ -1,0 +1,410 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ profile.full_name }} | Profile View</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <style>
+    body { 
+      background: #f9fafc; 
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      padding: 15px;
+    }
+    
+    .back-btn {
+      font-size: 16px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
+    
+    .profile-header {
+      background: linear-gradient(135deg, #007bff, #6610f2);
+      color: white; 
+      border-radius: 16px;
+      padding: 40px 25px;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    .profile-header img {
+      width: 140px; 
+      height: 140px;
+      object-fit: cover; 
+      border-radius: 50%;
+      border: 5px solid white; 
+      margin-bottom: 15px;
+    }
+    
+    .profile-header h4 {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .profile-header p {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+    
+    .premium-badge {
+      background: linear-gradient(45deg, gold, orange);
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #fff;
+      display: inline-block;
+    }
+    
+    .badge {
+      font-size: 15px;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+    
+    .detail-section {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    
+    .detail-section h5 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .detail-section hr {
+      margin: 15px 0;
+      opacity: 0.2;
+    }
+    
+    .detail-section .row > div {
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .detail-section strong {
+      color: #555;
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .detail-section p {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #666;
+    }
+    
+    .photo-grid img {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      object-fit: cover;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .photo-grid img:hover {
+      transform: scale(1.03);
+    }
+    
+    .action-btn {
+      font-size: 17px;
+      padding: 14px;
+      font-weight: 600;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+    
+    .modal-content {
+      border-radius: 16px;
+    }
+    
+    .modal-header {
+      padding: 20px 25px;
+      border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .modal-body {
+      padding: 30px 25px;
+      font-size: 17px;
+    }
+    
+    .modal-footer {
+      padding: 15px 25px;
+    }
+    
+    .modal-footer .btn {
+      font-size: 16px;
+      padding: 12px 24px;
+      border-radius: 10px;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        font-size: 15px;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      .back-btn {
+        font-size: 15px;
+        padding: 10px 16px;
+      }
+      
+      .profile-header {
+        padding: 30px 20px;
+        border-radius: 12px;
+      }
+      
+      .profile-header img {
+        width: 120px;
+        height: 120px;
+      }
+      
+      .profile-header h4 {
+        font-size: 22px;
+      }
+      
+      .profile-header p {
+        font-size: 15px;
+      }
+      
+      .premium-badge {
+        font-size: 14px;
+        padding: 5px 14px;
+      }
+      
+      .badge {
+        font-size: 14px;
+        padding: 6px 14px;
+      }
+      
+      .detail-section {
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+      }
+      
+      .detail-section h5 {
+        font-size: 19px;
+      }
+      
+      .detail-section .row > div {
+        margin-bottom: 12px;
+        font-size: 15px;
+      }
+      
+      .detail-section p {
+        font-size: 15px;
+      }
+      
+      .photo-grid img {
+        height: 150px;
+      }
+      
+      .action-btn {
+        font-size: 16px;
+        padding: 13px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .profile-header img {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .profile-header h4 {
+        font-size: 20px;
+      }
+      
+      .detail-section {
+        padding: 18px;
+      }
+      
+      .detail-section h5 {
+        font-size: 18px;
+      }
+      
+      .photo-grid img {
+        height: 120px;
+      }
+      
+      .detail-section .row > div {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-3">
+    <a href="{% url 'president_dashboard' %}" class="btn btn-outline-secondary back-btn">&larr; Back to Dashboard</a>
+
+    <div class="profile-header">
+      {% if profile.photos.first %}
+        <img src="{{ profile.photos.first.image.url }}" alt="{{ profile.full_name }}">
+      {% else %}
+        <img src="{% static 'images/default-user.png' %}" alt="User">
+      {% endif %}
+      <h4>{{ profile.full_name }}</h4>
+      <p class="mb-1">{{ profile.get_gender_display }} | {{ profile.age }} years</p>
+      {% if profile.is_premium %}
+        <div class="premium-badge mt-2">Premium Member</div>
+      {% endif %}
+      <p class="mt-3">
+        {% if profile.status == 'A' %}
+          <span class="badge bg-success">Approved</span>
+        {% elif profile.status == 'P' %}
+          <span class="badge bg-warning text-dark">Pending</span>
+        {% elif profile.status == 'B' %}
+          <span class="badge bg-danger">Blocked</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="detail-section">
+          <h5>Personal Information</h5>
+          <hr>
+          <div class="row">
+            <div class="col-sm-6 col-12"><strong>DOB:</strong> {{ profile.dob|date:"M d, Y" }}</div>
+            <div class="col-sm-6 col-12"><strong>Marital Status:</strong> {{ profile.maritial_status }}</div>
+            <div class="col-sm-6 col-12"><strong>Education:</strong> {{ profile.education }}</div>
+            <div class="col-sm-6 col-12"><strong>Occupation:</strong> {{ profile.occupation }}</div>
+            <div class="col-sm-6 col-12"><strong>Native Place:</strong> {{ profile.native_place }}</div>
+            <div class="col-sm-6 col-12"><strong>Gender:</strong> {{ profile.get_gender_display }}</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h5>Contact & Address</h5><hr>
+          <p><strong>Phone:</strong> {{ base_profile.phone|default:"Not provided" }}</p>
+          <p><strong>Address:</strong><br>{{ base_profile.address|linebreaks|default:"Not provided" }}</p>
+          <p><strong>Email:</strong> {{ base_profile.user.email|default:"Not provided" }}</p>
+          <p><strong>Shakha:</strong> {{ base_profile.shakha.name|default:"Not Assigned" }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h5>Family Details</h5><hr>
+          <p><strong>Father:</strong> {{ profile.father_name|default:"Not provided" }}</p>
+          <p><strong>Mother:</strong> {{ profile.mother_name|default:"Not provided" }}</p>
+          <p><strong>Family Info:</strong><br>{{ profile.family_details|linebreaks|default:"Not provided" }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h5>About</h5><hr>
+          <p>{{ profile.about|default:"No description available." }}</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="detail-section">
+          <h5>Photos</h5><hr>
+          {% if photos %}
+            <div class="row g-2 photo-grid">
+              {% for photo in photos %}
+                <div class="col-6">
+                  <img src="{{ photo.image.url }}" alt="Photo">
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">No photos uploaded.</p>
+          {% endif %}
+        </div>
+
+        <div class="detail-section text-center">
+          {% if profile.status == 'P' %}
+            <button class="btn btn-success action-btn" data-bs-toggle="modal" data-bs-target="#confirmModal" data-action="approve">Approve Profile</button>
+            <button class="btn btn-danger action-btn" data-bs-toggle="modal" data-bs-target="#confirmModal" data-action="block">Block Profile</button>
+          {% elif profile.status == 'A' %}
+            <button class="btn btn-warning action-btn" data-bs-toggle="modal" data-bs-target="#confirmModal" data-action="pending">Keep Pending</button>
+            <button class="btn btn-danger action-btn" data-bs-toggle="modal" data-bs-target="#confirmModal" data-action="block">Block Profile</button>
+          {% elif profile.status == 'B' %}
+            <button class="btn btn-success action-btn" data-bs-toggle="modal" data-bs-target="#confirmModal" data-action="unblock">Unblock Profile</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">Confirm Action</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p id="confirmMessage">Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="confirmBtn" class="btn btn-primary">Yes, Proceed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedAction = null;
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    modal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      selectedAction = button.getAttribute('data-action');
+      messageEl.textContent = `Are you sure you want to ${selectedAction} this profile?`;
+    });
+
+    confirmBtn.addEventListener('click', function() {
+      // Close modal immediately
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      modalInstance.hide();
+      
+      $.post("{% url 'update_profile_status' profile.id %}", {
+        action: selectedAction,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+      })
+      .done(function(res) {
+        location.reload();
+      })
+      .fail(function(err) {
+        console.error('Error updating profile status:', err);
+        location.reload();
+      });
+    });
+  </script>
+</body>
+</html>

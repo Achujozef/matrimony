@@ -618,3 +618,162 @@ def reject_interest(request, pk):
     interest.decline()  # use the model method
 
     return JsonResponse({"status": "rejected"})
+
+
+class ShakhaPresidentLoginView(View):
+    template_name = "shakha_login.html"
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            try:
+                if request.user.profile.is_shakha_president:
+                    return redirect('president_dashboard')
+            except Profile.DoesNotExist:
+                pass
+        return render(request, self.template_name)
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            try:
+                profile = user.profile
+                if profile.is_shakha_president:
+                    login(request, user)
+                    return redirect('president_dashboard')
+                else:
+                    messages.error(request, "Access Denied. Only Shakha Presidents can log in here.")
+                    return redirect('shakha_login')
+            except Profile.DoesNotExist:
+                messages.error(request, "Profile not found. Please contact admin.")
+        else:
+            messages.error(request, "Invalid username or password.")
+        return render(request, self.template_name)
+
+@login_required
+def shakha_logout(request):
+    logout(request)
+    return redirect('shakha_login')
+
+
+@login_required
+def president_dashboard(request):
+    profile = request.user.profile
+    if not profile.is_shakha_president:
+        messages.error(request, "Access Denied.")
+        return redirect('shakha_login')
+
+    # Filters
+    gender = request.GET.get('gender', 'all')
+    status = request.GET.get('status', 'all')
+    search = request.GET.get('search', '')
+
+    profiles = MatrimonialProfile.objects.filter(shakha=profile.shakha)
+
+    if gender in ['M', 'F']:
+        profiles = profiles.filter(gender=gender)
+    if status in ['P', 'A', 'B']:
+        profiles = profiles.filter(status=status)
+    if search:
+        profiles = profiles.filter(full_name__icontains=search)
+
+    # Add premium info
+    for p in profiles:
+        p.is_premium = PremiumSubscription.objects.filter(
+            profile=p.profile_owner, status='A', end_date__gt=timezone.now()
+        ).exists()
+
+    return render(request, 'president_dashboard.html', {
+        'profile': profile,
+        'profiles': profiles,
+        'gender': gender,
+        'status': status,
+        'search': search,
+    })
+
+@login_required
+def approve_profile(request, pk):
+    president = request.user.profile
+    if not president.is_shakha_president:
+        messages.error(request, "Access Denied.")
+        return redirect('shakha_login')
+    
+    profile = get_object_or_404(MatrimonialProfile, pk=pk, shakha=president.shakha)
+    profile.approve(president)
+    messages.success(request, f"{profile.full_name} has been approved.")
+    return redirect('president_dashboard')
+
+
+@login_required
+def block_profile(request, pk):
+    president = request.user.profile
+    if not president.is_shakha_president:
+        messages.error(request, "Access Denied.")
+        return redirect('shakha_login')
+    
+    profile = get_object_or_404(MatrimonialProfile, pk=pk, shakha=president.shakha)
+    profile.block(president, message="Blocked by president.")
+    messages.warning(request, f"{profile.full_name} has been blocked.")
+    return redirect('president_dashboard')
+
+
+@login_required
+def view_profile(request, pk):
+    president = request.user.profile
+    if not president.is_shakha_president:
+        messages.error(request, "Access Denied.")
+        return redirect('shakha_login')
+
+    matrimonial_profile = get_object_or_404(
+        MatrimonialProfile, pk=pk, shakha=president.shakha
+    )
+
+    # Get the related base profile (user profile)
+    base_profile = matrimonial_profile.profile_owner
+
+    # Check premium status
+    matrimonial_profile.is_premium = PremiumSubscription.objects.filter(
+        profile=base_profile,
+        status='A',
+        end_date__gt=timezone.now()
+    ).exists()
+
+    photos = matrimonial_profile.photos.all()
+
+    return render(request, 'view_profile.html', {
+        'profile': matrimonial_profile,
+        'base_profile': base_profile,
+        'photos': photos,
+    })
+
+@login_required
+@require_POST
+def update_profile_status(request, pk):
+    president = request.user.profile
+    if not president.is_shakha_president:
+        return JsonResponse({'error': 'Access Denied'}, status=403)
+
+    profile = get_object_or_404(MatrimonialProfile, pk=pk, shakha=president.shakha)
+    action = request.POST.get('action')
+
+    if action == 'approve':
+        profile.approve(president)
+        msg = f"{profile.full_name} has been approved."
+    elif action == 'block':
+        profile.block(president, message="Blocked by president.")
+        msg = f"{profile.full_name} has been blocked."
+    elif action == 'pending':
+        profile.status = 'P'
+        profile.save()
+        msg = f"{profile.full_name} set to pending."
+    elif action == 'unblock':
+        profile.status = 'A'
+        profile.save()
+        msg = f"{profile.full_name} has been unblocked."
+    else:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    return JsonResponse({'success': msg})

@@ -15,4 +15,14 @@ urlpatterns = [
 
     path('interest/<int:pk>/accept/', accept_interest, name='accept_interest'),
     path('interest/<int:pk>/reject/', reject_interest, name='reject_interest'),
+
+    path('president/login/', ShakhaPresidentLoginView.as_view(), name='shakha_login'),
+    path('president/logout/', shakha_logout, name='shakha_logout'),
+    path('president/dashboard/', president_dashboard, name='president_dashboard'),
+    path('president/profile/<int:pk>/', view_profile, name='view_profile'),
+    path('president/approve/<int:pk>/', approve_profile, name='approve_profile'),
+    path('president/block/<int:pk>/', block_profile, name='block_profile'),
+    path('update-profile-status/<int:pk>/', update_profile_status, name='update_profile_status'),
+
+
 ]

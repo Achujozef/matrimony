@@ -1,0 +1,371 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>President Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { 
+      background-color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      padding: 20px;
+    }
+    
+    .header-section {
+      margin-bottom: 25px;
+    }
+    
+    .header-section h3 {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 0;
+    }
+    
+    .logout-btn {
+      font-size: 16px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    
+    .card { 
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 25px;
+      background: white;
+    }
+    
+    .info-card {
+      margin-bottom: 25px;
+    }
+    
+    .info-card h5 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .info-card p {
+      font-size: 17px;
+      color: #6c757d;
+      margin: 0;
+    }
+    
+    .premium-badge { 
+      background: linear-gradient(45deg, gold, orange);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    
+    .filter-bar {
+      margin-bottom: 25px;
+      gap: 12px;
+    }
+    
+    .filter-bar input,
+    .filter-bar select {
+      font-size: 16px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid #dee2e6;
+      min-width: 200px;
+      flex: 1;
+    }
+    
+    .filter-bar button {
+      font-size: 16px;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    
+    .status-pending { 
+      color: #f0ad4e;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    
+    .status-approved { 
+      color: #28a745;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    
+    .status-blocked { 
+      color: #dc3545;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    
+    .profile-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      height: 100%;
+    }
+    
+    .profile-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    
+    .profile-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border: 3px solid #f0f0f0;
+    }
+    
+    .profile-card h6 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .profile-card small {
+      font-size: 15px;
+    }
+    
+    .profile-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .profile-actions .btn {
+      font-size: 15px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      flex: 1;
+      min-width: 100px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+      font-size: 18px;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        font-size: 15px;
+      }
+      
+      .container {
+        padding: 15px;
+      }
+      
+      .header-section {
+        margin-bottom: 20px;
+      }
+      
+      .header-section h3 {
+        font-size: 22px;
+        margin-bottom: 12px;
+      }
+      
+      .header-section .d-flex {
+        flex-direction: column;
+        align-items: stretch !important;
+      }
+      
+      .logout-btn {
+        font-size: 15px;
+        padding: 11px 20px;
+        width: 100%;
+      }
+      
+      .card {
+        padding: 20px;
+        border-radius: 12px;
+      }
+      
+      .info-card {
+        margin-bottom: 20px;
+      }
+      
+      .info-card h5 {
+        font-size: 19px;
+      }
+      
+      .info-card p {
+        font-size: 16px;
+      }
+      
+      .filter-bar {
+        margin-bottom: 20px;
+      }
+      
+      .filter-bar input,
+      .filter-bar select {
+        font-size: 15px;
+        padding: 11px 14px;
+        min-width: 100%;
+        width: 100%;
+      }
+      
+      .filter-bar button {
+        font-size: 15px;
+        padding: 11px 24px;
+        width: 100%;
+      }
+      
+      .profile-card img {
+        width: 70px;
+        height: 70px;
+      }
+      
+      .profile-card h6 {
+        font-size: 17px;
+      }
+      
+      .profile-card small {
+        font-size: 14px;
+      }
+      
+      .profile-actions {
+        margin-top: 15px;
+        gap: 6px;
+      }
+      
+      .profile-actions .btn {
+        font-size: 14px;
+        padding: 9px 12px;
+        min-width: 80px;
+      }
+      
+      .premium-badge {
+        font-size: 12px;
+        padding: 3px 10px;
+      }
+      
+      .status-pending,
+      .status-approved,
+      .status-blocked {
+        font-size: 14px;
+      }
+      
+      .empty-state {
+        padding: 50px 15px;
+        font-size: 16px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .header-section h3 {
+        font-size: 20px;
+      }
+      
+      .info-card h5 {
+        font-size: 18px;
+      }
+      
+      .profile-card img {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .profile-card h6 {
+        font-size: 16px;
+      }
+      
+      .profile-actions .btn {
+        font-size: 13px;
+        padding: 8px 10px;
+        min-width: 70px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-section">
+      <div class="d-flex justify-content-between align-items-center">
+        <h3>Welcome, {{ profile.user.get_full_name|default:profile.user.username }}</h3>
+        <a href="{% url 'shakha_logout' %}" class="btn btn-outline-danger logout-btn">Logout</a>
+      </div>
+    </div>
+
+    <div class="card info-card">
+      <h5>Shakha: {{ profile.shakha.name }}</h5>
+      <p>Role: Shakha President</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <form method="get" class="d-flex flex-wrap filter-bar">
+      <input type="text" name="search" placeholder="Search by name" value="{{ search }}" class="form-control">
+      <select name="gender" class="form-select">
+        <option value="all">All Genders</option>
+        <option value="M" {% if gender == 'M' %}selected{% endif %}>Men</option>
+        <option value="F" {% if gender == 'F' %}selected{% endif %}>Women</option>
+      </select>
+      <select name="status" class="form-select">
+        <option value="all">All Status</option>
+        <option value="P" {% if status == 'P' %}selected{% endif %}>Pending</option>
+        <option value="A" {% if status == 'A' %}selected{% endif %}>Approved</option>
+        <option value="B" {% if status == 'B' %}selected{% endif %}>Blocked</option>
+      </select>
+      <button class="btn btn-primary">Filter</button>
+    </form>
+
+    <!-- Profiles List -->
+    <div class="row g-3">
+      {% for p in profiles %}
+        <div class="col-lg-4 col-md-6 col-12">
+          <div class="card profile-card">
+            <div class="d-flex align-items-center">
+              {% if p.photos.first %}
+                <img src="{{ p.photos.first.image.url }}" class="rounded-circle me-3" alt="{{ p.full_name }}">
+              {% else %}
+                <img src="{% static 'images/default-user.png' %}" class="rounded-circle me-3" alt="User">
+              {% endif %}
+              <div class="flex-grow-1">
+                <h6 class="mb-0">
+                  {{ p.full_name }}
+                  {% if p.is_premium %}
+                    <span class="premium-badge ms-1">Premium</span>
+                  {% endif %}
+                </h6>
+                <small class="text-muted d-block">{{ p.get_gender_display }} | {{ p.age }} yrs</small>
+                <small>
+                  {% if p.status == 'P' %}
+                    <span class="status-pending">Pending</span>
+                  {% elif p.status == 'A' %}
+                    <span class="status-approved">Approved</span>
+                  {% elif p.status == 'B' %}
+                    <span class="status-blocked">Blocked</span>
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+            <div class="profile-actions">
+              <a href="{% url 'view_profile' p.id %}" class="btn btn-outline-primary">View Profile</a>
+
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="empty-state">
+            <p>No profiles found.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
