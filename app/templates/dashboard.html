@@ -77,7 +77,7 @@
 
     <div class="d-flex gap-2 align-items-center">
       {% if user.is_authenticated %}
-        <a href="#" class="btn btn-primary">My Profile</a>
+        <a href="{% url 'my_profile' %}" class="btn btn-primary">My Profile</a>
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#interestsModal">Interests</button>
         <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#notificationsModal">Notifications</button>
       {% else %}
@@ -173,15 +173,15 @@
         </div>
       </div>
 
-      <hr/>
+      {% comment %} <hr/> {% endcomment %}
 
       <!-- Stats -->
-      <div class="mb-3">
+      {% comment %} <div class="mb-3">
         <h6 class="mb-2">Community Overview</h6>
         <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:var(--brand)">{{ stats.total_profiles|default:0 }}</div><div class="small-muted">Profiles</div></div>
         <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:#28a745">{{ stats.verified|default:0 }}</div><div class="small-muted">Verified</div></div>
         <div class="stat mb-2"><div style="font-size:18px;font-weight:700;color:#ffc107">{{ stats.pending|default:0 }}</div><div class="small-muted">Pending</div></div>
-      </div>
+      </div> {% endcomment %}
 
       <hr/>
 
@@ -231,7 +231,7 @@
                   <li>Featured placement on top search results</li>
                   <li>Exclusive notifications & filters</li>
               </ul>
-              <a href="#" class="btn btn-primary btn-sm w-100">Go Premium Now</a>
+              <a href="{% url 'premium' %}" class="btn btn-primary btn-sm w-100">Go Premium Now</a>
           </div>
           {% endif %}
       {% endif %}

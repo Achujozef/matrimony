@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Kerala Vishwakarma{% endblock %}
+{% block content %}
+
+<style>
+  body {
+    background: #f4f7fb;
+  }
+
+  .profile-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+  }
+
+  .profile-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  }
+
+  h4 {
+    font-weight: 700;
+    color: #0d6efd;
+  }
+
+  h6 {
+    color: #495057;
+    font-weight: 600;
+  }
+
+  .form-label {
+    font-weight: 500;
+    color: #444;
+  }
+
+  .form-control, .form-select {
+    border-radius: 10px;
+    border: 1px solid #d6d8da;
+    transition: 0.2s ease;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+  }
+
+  textarea.form-control {
+    resize: none;
+  }
+
+  .btn-pill {
+    border-radius: 50px;
+  }
+
+  .btn-outline-secondary {
+    border-radius: 50px;
+  }
+
+  .back-btn {
+    background: linear-gradient(45deg, #198754, #0d6efd);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: 0.3s;
+  }
+
+  .back-btn:hover {
+    background: linear-gradient(45deg, #157347, #0b5ed7);
+    color: #fff;
+  }
+
+  @media (max-width: 768px) {
+    .profile-card {
+      padding: 1.5rem;
+    }
+    h4 {
+      font-size: 1.3rem;
+    }
+  }
+</style>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">My Profile</h4>
+    <a href="{% url 'dashboard' %}" class="back-btn">
+      ← Back to Explore
+    </a>
+  </div>
+
+  <div class="profile-card">
+    <form method="POST" enctype="multipart/form-data" class="row g-4">
+      {% csrf_token %}
+
+      <!-- Section 1 -->
+      <div class="col-12">
+        <h6 class="border-bottom pb-2 mb-3">Personal Info</h6>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="full_name" value="{{ matrimonial.full_name }}" class="form-control" required>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option value="M" {% if matrimonial.gender == 'M' %}selected{% endif %}>Male</option>
+          <option value="F" {% if matrimonial.gender == 'F' %}selected{% endif %}>Female</option>
+          <option value="O" {% if matrimonial.gender == 'O' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" name="dob" value="{{ matrimonial.dob|date:'Y-m-d' }}" class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Age</label>
+        <input type="number" name="age" value="{{ matrimonial.age }}" min="18" max="100" class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Marital Status</label>
+        <select class="form-select" name="maritial_status" required>
+          <option value="">-- Select --</option>
+          <option value="Never Married" {% if matrimonial.maritial_status == "Never Married" %}selected{% endif %}>Never Married</option>
+          <option value="Divorced" {% if matrimonial.maritial_status == "Divorced" %}selected{% endif %}>Divorced</option>
+          <option value="Widowed" {% if matrimonial.maritial_status == "Widowed" %}selected{% endif %}>Widowed</option>
+          <option value="Separated" {% if matrimonial.maritial_status == "Separated" %}selected{% endif %}>Separated</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Native Place</label>
+        <input type="text" name="native_place" value="{{ matrimonial.native_place }}" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Education</label>
+        <input type="text" name="education" value="{{ matrimonial.education }}" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Occupation</label>
+        <input type="text" name="occupation" value="{{ matrimonial.occupation }}" class="form-control">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">About Me</label>
+        <textarea name="about" class="form-control" rows="3">{{ matrimonial.about }}</textarea>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="col-12 mt-4">
+        <h6 class="border-bottom pb-2 mb-3">Family Details</h6>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Father's Name</label>
+        <input type="text" name="father_name" value="{{ matrimonial.father_name }}" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Mother's Name</label>
+        <input type="text" name="mother_name" value="{{ matrimonial.mother_name }}" class="form-control">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Family Details</label>
+        <textarea name="family_details" class="form-control" rows="3">{{ matrimonial.family_details }}</textarea>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="col-12 mt-4">
+        <h6 class="border-bottom pb-2 mb-3">Contact Info</h6>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" value="{{ profile.phone }}" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Address</label>
+        <input type="text" name="address" value="{{ profile.address }}" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Shakha</label>
+        <select name="shakha" class="form-select">
+          <option value="">-- Select Shakha --</option>
+          {% for s in shakhas %}
+            <option value="{{ s.id }}" {% if profile.shakha and profile.shakha.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Position / Role</label>
+        <input type="text" name="position" value="{{ profile.position }}" class="form-control">
+      </div>
+
+      <!-- Section 4 -->
+      <div class="col-12 mt-4">
+        <h6 class="border-bottom pb-2 mb-3">Privacy Settings</h6>
+      </div>
+
+      <div class="col-md-6 form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="hide_photos_until_connection" id="hidePhotos"
+               {% if matrimonial.hide_photos_until_connection %}checked{% endif %}>
+        <label class="form-check-label" for="hidePhotos">Hide photos until connection</label>
+      </div>
+
+      <div class="col-md-6 form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="hide_phone_until_connection" id="hidePhone"
+               {% if matrimonial.hide_phone_until_connection %}checked{% endif %}>
+        <label class="form-check-label" for="hidePhone">Hide phone number until connection</label>
+      </div>
+
+      <div class="col-12 text-end mt-4">
+        <button type="submit" class="btn btn-primary btn-pill px-4">
+          💾 Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

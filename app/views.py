@@ -21,6 +21,7 @@ from django.contrib.auth import get_user_model
 import random
 import string
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.mail import EmailMessage
 
 from .models import *
 from django.utils.decorators import method_decorator
@@ -453,6 +454,7 @@ class DashboardView(LoginRequiredMixin, View):
                         .filter(accepted__isnull=True)   # only show pending
                         .order_by('-created_at')
                     )
+        print("is_premium :",is_premium)
         print("received_interests :",received_interests)
         context = {
             'page_obj': page_obj,
@@ -532,27 +534,39 @@ def express_interest_view(request, pk):
     if not user_profile:
         return JsonResponse({"error": "Complete your profile first."}, status=400)
 
+    # Get sender's matrimonial profile
+    user_matrimonial = getattr(user_profile, "matrimonial_profile", None)
+    if not user_matrimonial:
+        return JsonResponse({"error": "You need to create your matrimonial profile first."}, status=400)
+
+    # Target profile
     to_profile = get_object_or_404(MatrimonialProfile, pk=pk)
+
+    # Prevent self-interest
     if to_profile.profile_owner == user_profile:
         return JsonResponse({"error": "Cannot express interest to your own profile."}, status=400)
 
-    # already sent
+    # Check if already sent
     existing = Interest.objects.filter(from_profile=user_profile, to_profile=to_profile).first()
     if existing:
         return JsonResponse({"success": True, "message": "Interest already sent."})
 
-    # create interest
+    # Create new interest
     interest = Interest.objects.create(from_profile=user_profile, to_profile=to_profile)
 
-    # check reverse
-    reverse = Interest.objects.filter(from_profile=to_profile.profile_owner, to_profile=user_profile).first()
+    # Check reverse (if the other user already showed interest)
+    reverse = Interest.objects.filter(
+        from_profile=to_profile.profile_owner,  # profile of the other user
+        to_profile=user_matrimonial             # matrimonial profile of current user
+    ).first()
+
     if reverse:
-        # if reverse exists → mark both accepted (mutual)
         interest.accept()
         reverse.accept()
         return JsonResponse({"success": True, "message": "It's a Match! 🎉", "mutual": True})
 
     return JsonResponse({"success": True, "message": "Interest sent.", "mutual": False})
+
 
 @login_required
 def reveal_contact_view(request, pk):
@@ -619,6 +633,127 @@ def reject_interest(request, pk):
 
     return JsonResponse({"status": "rejected"})
 
+
+@login_required
+def my_profile_view(request):
+    user_profile, _ = Profile.objects.get_or_create(user=request.user)
+    matrimonial, _ = MatrimonialProfile.objects.get_or_create(profile_owner=user_profile)
+
+    if request.method == "POST":
+        # Profile fields
+        user_profile.phone = request.POST.get("phone", "")
+        user_profile.address = request.POST.get("address", "")
+        shakha_id = request.POST.get("shakha")
+        user_profile.shakha_id = shakha_id if shakha_id else None
+        user_profile.position = request.POST.get("position", "")
+        user_profile.save()
+
+        # Matrimonial fields
+        matrimonial.full_name = request.POST.get("full_name", "")
+        matrimonial.dob = request.POST.get("dob") or None
+        matrimonial.gender = request.POST.get("gender", "M")
+        matrimonial.age = request.POST.get("age") or None
+        matrimonial.education = request.POST.get("education", "")
+        matrimonial.occupation = request.POST.get("occupation", "")
+        matrimonial.about = request.POST.get("about", "")
+        matrimonial.native_place = request.POST.get("native_place", "")
+        matrimonial.maritial_status = request.POST.get("maritial_status", "")
+        matrimonial.father_name = request.POST.get("father_name", "")
+        matrimonial.mother_name = request.POST.get("mother_name", "")
+        matrimonial.family_details = request.POST.get("family_details", "")
+        matrimonial.hide_photos_until_connection = bool(request.POST.get("hide_photos_until_connection"))
+        matrimonial.hide_phone_until_connection = bool(request.POST.get("hide_phone_until_connection"))
+        matrimonial.shakha_id = shakha_id if shakha_id else None
+        matrimonial.save()
+
+        messages.success(request, "Profile updated successfully.")
+        return redirect("my_profile")
+
+    shakhas = Shakha.objects.all()
+    return render(request, "my_profile.html", {
+        "profile": user_profile,
+        "matrimonial": matrimonial,
+        "shakhas": shakhas,
+    })
+
+
+
+@login_required
+def premium_view(request):
+    profile = request.user.profile
+    existing_sub = PremiumSubscription.objects.filter(profile=profile).order_by('-created_at').first()
+
+    if request.method == "POST":
+        payment_screenshot = request.FILES.get("payment_screenshot")
+        txn_id = request.POST.get("txn_id")
+        note = request.POST.get("note")
+
+        if not existing_sub or existing_sub.status in ['R', 'E']:
+            new_sub = PremiumSubscription.objects.create(
+                profile=profile,
+                payment_amount=499.00,
+                payment_screenshot=payment_screenshot,
+                payment_message=f"Txn ID: {txn_id}\nNote: {note}",
+                status='P',
+            )
+
+            # ---- SEND EMAIL TO ADMIN ----
+            subject = f"New Premium Payment Request - {profile.user.get_full_name() or profile.user.username}"
+            body = f"""
+A new premium payment has been submitted.
+
+👤 **User Details**
+-------------------------
+Name: {profile.user.get_full_name() or profile.user.username}
+User ID: {profile.id}
+Email: {profile.user.email}
+Phone: {getattr(profile, 'phone', 'N/A')}
+Shakha: {getattr(profile, 'shakha', 'N/A')}
+
+💳 **Payment Details**
+-------------------------
+Transaction ID: {txn_id}
+Note: {note}
+Amount: ₹499.00
+Status: Pending (P)
+
+📅 Date: {new_sub.created_at.strftime('%d %b %Y, %I:%M %p')}
+"""
+
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=['dineshvarkala@gmail.com'],
+            )
+
+            # Attach the payment screenshot if present
+            if payment_screenshot:
+                email.attach(payment_screenshot.name, payment_screenshot.read(), payment_screenshot.content_type)
+
+            email.send(fail_silently=False)
+
+        return redirect('premium')
+
+    context = {
+        "profile": profile,
+        "subscription": existing_sub,
+        "upi_id": "bthinkx@oksbi",
+        "account_details": {
+            "name": "Kerala Vishwakarma",
+            "bank": "State Bank of India",
+            "account": "123456789012",
+            "ifsc": "SBIN0001234",
+        },
+        "benefits": [
+            "View full profile details and contact numbers",
+            "Send unlimited interests",
+            "Priority visibility in explore section",
+            "Exclusive premium badge on your profile",
+            "Access to advanced search filters"
+        ]
+    }
+    return render(request, "premium_purchase.html", context)
 
 class ShakhaPresidentLoginView(View):
     template_name = "shakha_login.html"

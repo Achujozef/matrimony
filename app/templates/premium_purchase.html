@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+  <h2 class="text-center mb-4">🌟 Premium Membership</h2>
+
+  {% if subscription and subscription.is_active %}
+    <div class="alert alert-success text-center shadow-sm">
+      <h5>You are a Premium Member!</h5>
+      <p>Activated on: {{ subscription.start_date|date:"M d, Y" }}</p>
+      <p>Valid till: {{ subscription.end_date|date:"M d, Y" }}</p>
+      {% if subscription.payment_message %}
+        <p><strong>Transaction ID:</strong> {{ subscription.payment_message }}</p>
+      {% endif %}
+      {% if subscription.payment_screenshot %}
+        <p><a href="{{ subscription.payment_screenshot.url }}" target="_blank" class="btn btn-outline-light btn-sm">View Payment Screenshot</a></p>
+      {% endif %}
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+      <div class="card-body">
+        <h5>Premium Benefits</h5>
+        <ul>
+          {% for benefit in benefits %}
+            <li>{{ benefit }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+  {% elif subscription and subscription.status == 'P' %}
+    <div class="alert alert-warning text-center shadow-sm">
+      <strong>Your payment is under review.</strong><br>
+      Premium benefits will be activated within 24 hours.
+    </div>
+
+  {% else %}
+    <div class="row">
+      <!-- Payment Details -->
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body text-center">
+            <h5>💰 Payment Details</h5>
+            <p class="text-muted">Scan or use the UPI ID below to make your ₹499 payment.</p>
+
+            <img src="{% static 'img/upi_qr.png' %}" alt="UPI QR" class="img-fluid mb-3 border rounded p-2" style="max-width: 250px;">
+            <h6><strong>UPI ID:</strong> <span class="text-primary">{{ upi_id }}</span></h6>
+
+            <hr>
+            <h6>Bank Account Details (Alternative)</h6>
+            <p><strong>Name:</strong> {{ account_details.name }}</p>
+            <p><strong>Bank:</strong> {{ account_details.bank }}</p>
+            <p><strong>Account No:</strong> {{ account_details.account }}</p>
+            <p><strong>IFSC:</strong> {{ account_details.ifsc }}</p>
+          </div>
+        </div>
+
+        <!-- Payment Guidance -->
+        <div class="card shadow-sm bg-light">
+          <div class="card-body">
+            <h5>📝 How to Make Payment</h5>
+            <ol class="small mb-0">
+              <li>Open your UPI app (Google Pay, PhonePe, Paytm, etc.).</li>
+              <li>Scan the QR code or send ₹499 to <strong>{{ upi_id }}</strong>.</li>
+              <li>Add note: <em>“Premium Membership”</em> and your name.</li>
+              <li>Take a clear screenshot of the successful payment.</li>
+              <li>Upload the screenshot and Transaction ID in the form.</li>
+            </ol>
+            <p class="mt-2 text-success fw-bold small">💡 Your premium will be activated within a few hours after verification.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Upload Form -->
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5>📤 Submit Payment Details</h5>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label">Transaction ID</label>
+                <input type="text" name="txn_id" class="form-control" placeholder="e.g., GPay12345" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Upload Payment Screenshot</label>
+                <input type="file" name="payment_screenshot" class="form-control" accept="image/*" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Note (optional)</label>
+                <textarea name="note" class="form-control" rows="2" placeholder="Any additional info..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Submit for Verification</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="card mt-4 shadow-sm">
+          <div class="card-body">
+            <h6>Premium Benefits:</h6>
+            <ul class="mb-0">
+              {% for benefit in benefits %}
+                <li>{{ benefit }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Help Section -->
+  <div class="card mt-5 shadow-sm">
+    <div class="card-body">
+      <h5>💬 Need Help?</h5>
+      {% if shakha_president %}
+        <p>Contact your Shakha President for assistance:</p>
+        <p><strong>{{ shakha_president.user.get_full_name }}</strong><br>
+        📞 {{ shakha_president.phone }}</p>
+      {% else %}
+        <p>No Shakha President assigned for your shakha yet. Please contact support.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

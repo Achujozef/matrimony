@@ -12,6 +12,8 @@ urlpatterns = [
     path('profile/<int:pk>/interest/', express_interest_view, name='express_interest'),
     path('profile/<int:pk>/reveal-contact/', reveal_contact_view, name='reveal_contact'),
 
+    path("my-profile/", my_profile_view, name="my_profile"),
+    path("premium/", premium_view, name="premium"),
 
     path('interest/<int:pk>/accept/', accept_interest, name='accept_interest'),
     path('interest/<int:pk>/reject/', reject_interest, name='reject_interest'),

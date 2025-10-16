@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!s0z4-*!j1lmxm(j(o(j34+z@iknm@i#5hd@%iaxo5a3r&n34s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["88.222.241.142","matrimony.keralaviswakarmasabha.com"]
+ALLOWED_HOSTS = ["127.0.0.1","88.222.241.142","matrimony.keralaviswakarmasabha.com"]
 
 
 # Application definition
@@ -131,3 +131,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 STATIC_ROOT = BASE_DIR / 'static/'
+
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'achujozefsl0709@gmail.com'  # your email
+EMAIL_HOST_PASSWORD = 'mtbsaphoieurdqqe'  # use env var in production
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
