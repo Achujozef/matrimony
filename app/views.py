@@ -19,6 +19,7 @@ from django.contrib import messages
 from .models import MatrimonialProfile, Shakha, Interest, Profile, PremiumSubscription
 from django.contrib.auth import get_user_model
 import random
+from django.urls import reverse
 import string
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import EmailMessage
@@ -473,8 +474,10 @@ class DashboardView(LoginRequiredMixin, View):
                         .filter(accepted__isnull=True)   # only show pending
                         .order_by('-created_at')
                     )
+                    pending_received_count = received_interests.count()
         print("is_premium :",is_premium)
         print("received_interests :",received_interests)
+
         context = {
             'page_obj': page_obj,
             'shakhas': Shakha.objects.all(),
@@ -483,6 +486,7 @@ class DashboardView(LoginRequiredMixin, View):
                 'total_profiles': MatrimonialProfile.objects.count(),
                 'verified': MatrimonialProfile.objects.filter(status='A').count(),
                 'pending': MatrimonialProfile.objects.filter(status='P').count(),
+                'pending_received': pending_received_count,
             },
             'featured_profiles': featured_profiles,
             'is_premium': is_premium,
@@ -658,6 +662,129 @@ def reject_interest(request, pk):
 
     return JsonResponse({"status": "rejected"})
 
+
+class MatchedProfilesView(LoginRequiredMixin, ListView):
+    model = MatrimonialProfile
+    template_name = "matches_list.html"
+    context_object_name = "page_obj"
+    paginate_by = 12
+
+    def get_queryset(self):
+        user_profile = self.request.user.profile
+        filter_type = self.request.GET.get('filter', 'mutual')
+
+        if filter_type == 'sent':
+            # Profiles user has sent interest but NOT accepted and NOT cancelled
+            pending_sent_ids = Interest.objects.filter(
+                from_profile=user_profile,
+                accepted__isnull=True,
+                cancelled=False
+            ).values_list('to_profile_id', flat=True)
+
+            return MatrimonialProfile.objects.filter(
+                id__in=pending_sent_ids,
+                status='A',
+                profile_owner__is_blocked=False
+            ).order_by('-updated_at')
+
+        elif filter_type == 'received':
+            # Profiles that sent interest TO user that are pending and not cancelled
+            received_ids = Interest.objects.filter(
+                to_profile__profile_owner=user_profile,
+                accepted__isnull=True,
+                cancelled=False
+            ).values_list('from_profile__id', flat=True)
+
+            return MatrimonialProfile.objects.filter(
+                id__in=received_ids,
+                status='A',
+                profile_owner__is_blocked=False
+            ).order_by('-updated_at')
+
+        else:
+            # Mutual matches: accepted interests excluding cancelled
+            sent_accepted_ids = Interest.objects.filter(
+                from_profile=user_profile,
+                accepted=True,
+                cancelled=False
+            ).values_list('to_profile_id', flat=True)
+
+            received_accepted_ids = Interest.objects.filter(
+                to_profile__profile_owner=user_profile,
+                accepted=True,
+                cancelled=False
+            ).values_list('from_profile__matrimonial_profile__id', flat=True)
+
+            match_ids = set(sent_accepted_ids) | set(received_accepted_ids)
+
+            return MatrimonialProfile.objects.filter(
+                id__in=match_ids,
+                status='A',
+                profile_owner__is_blocked=False
+            ).order_by('-updated_at')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user_profile = self.request.user.profile
+        filter_type = self.request.GET.get('filter', 'mutual')
+        ctx['show_sent_filter'] = filter_type == 'sent'
+        ctx['show_received_filter'] = filter_type == 'received'
+
+        # Sent interests IDs
+        ctx['sent_interests'] = list(
+            Interest.objects.filter(from_profile=user_profile, cancelled=False)
+            .values_list('to_profile_id', flat=True)
+        )
+
+        # Received interests for modal/count
+        ctx['received_interests'] = Interest.objects.filter(
+            to_profile__profile_owner=user_profile,
+            accepted__isnull=True,
+            cancelled=False
+        ).select_related('from_profile__matrimonial_profile')
+
+        # Premium status
+        ctx['is_premium'] = PremiumSubscription.objects.filter(
+            profile=user_profile,
+            status='A',
+            end_date__gt=timezone.now()
+        ).exists()
+
+        return ctx
+
+
+# ---------- Cancel Pending Sent Interest ----------
+class CancelSentInterestView(LoginRequiredMixin, View):
+    def post(self, request, interest_id):
+        interest = get_object_or_404(
+            Interest,
+            id=interest_id,
+            from_profile=request.user.profile,
+            accepted__isnull=True,
+            cancelled=False
+        )
+        interest.cancel()  # mark as cancelled
+        messages.success(request, "Sent interest has been cancelled.")
+        return redirect(f"{reverse('matches_list')}?filter=sent")
+
+
+# ---------- Cancel Mutual Match ----------
+class CancelMatchView(LoginRequiredMixin, View):
+    def post(self, request, match_id):
+        user_profile = request.user.profile
+        target_profile = get_object_or_404(MatrimonialProfile, id=match_id)
+
+        # mark as cancelled any accepted interests between them
+        Interest.objects.filter(
+            from_profile=user_profile, to_profile=target_profile, accepted=True, cancelled=False
+        ).update(cancelled=True)
+        
+        Interest.objects.filter(
+            from_profile=target_profile.profile_owner, to_profile=user_profile.matrimonial_profile, accepted=True, cancelled=False
+        ).update(cancelled=True)
+
+        messages.success(request, "Match has been cancelled.")
+        return redirect('matches_list')
 
 @login_required
 def my_profile_view(request):

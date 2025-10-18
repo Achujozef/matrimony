@@ -178,9 +178,16 @@ body {
       {% endif %}
     </ul>
 
-    <!-- Mobile Search + Menu -->
-    <div class="d-flex d-md-flex d-lg-none w-100 justify-content-between mt-1">
-      <form class="d-flex flex-grow-1 me-2" method="get" action="{% url 'dashboard' %}">
+<!-- Mobile Search + Menu -->
+<div class="d-flex d-md-flex d-lg-none w-100 justify-content-between align-items-center mt-1">
+
+    <!-- Mobile Brand -->
+    <a href="{% url 'dashboard' %}" class="d-flex d-lg-none align-items-center text-decoration-none me-2">
+        <div class="brand-mark me-1">KV</div>
+    </a>
+
+    <!-- Mobile Search Form -->
+    <form class="d-flex flex-grow-1 me-2" method="get" action="{% url 'dashboard' %}">
         <input 
           name="q" 
           class="form-control form-control-sm me-1" 
@@ -188,11 +195,13 @@ body {
           placeholder="Search..." 
           value="{{ request.GET.q|default:'' }}">
         <button class="btn btn-primary btn-sm" type="submit">Search</button>
-      </form>
-      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+    </form>
+
+    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
         ☰
-      </button>
-    </div>
+    </button>
+</div>
+
 
   </div>
 </nav>
@@ -211,9 +220,10 @@ body {
     </form>
 
     <div class="d-grid gap-2">
-      <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'dashboard' %}'">Explore Profiles</button>
+      <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'dashboard' %}'">Home</button>
       {% if user.is_authenticated %}
         <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'my_profile' %}'">My Profile</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'matches_list' %}'">Matches Intrestes</button>
         <button class="btn btn-outline-danger btn-sm" onclick="location.href='{% url 'logout' %}'">Logout</button>
       {% else %}
         <button class="btn btn-outline-success btn-sm" onclick="location.href='{% url 'login' %}'">Login</button>
@@ -229,8 +239,17 @@ body {
 </div>
 
 
+
   <!-- MAIN container -->
   <main class="container-max my-4">
+    {% if request.resolver_match.url_name != 'dashboard' %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+    {% block breadcrumb %}{% endblock %}
+  </ol>
+</nav>
+{% endif %}
     {% block content %}{% endblock %}
   </main>
 

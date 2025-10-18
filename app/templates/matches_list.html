@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Matches</li>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  <!-- Filter Buttons -->
+<!-- Filter Row -->
+<div class="mb-3 d-flex border-bottom">
+    <!-- Mutual Matches -->
+    <a href="{% url 'matches_list' %}" 
+       class="me-3 pb-2 text-decoration-none 
+              {% if not show_sent_filter and not show_received_filter %}border-bottom border-2 border-primary fw-bold{% else %}text-muted{% endif %}
+              fs-7 fs-md-5">
+        Matches
+    </a>
+
+    <!-- Sent Interests -->
+    <a href="{% url 'matches_list' %}?filter=sent" 
+       class="me-3 pb-2 text-decoration-none 
+              {% if show_sent_filter %}border-bottom border-2 border-primary fw-bold{% else %}text-muted{% endif %}
+              fs-7 fs-md-5">
+        Sent
+    </a>
+
+    <!-- Received Interests -->
+    <a href="{% url 'matches_list' %}?filter=received" 
+       class="me-3 pb-2 text-decoration-none position-relative 
+              {% if show_received_filter %}border-bottom border-2 border-primary fw-bold{% else %}text-muted{% endif %}
+              fs-7 fs-md-5">
+        Received
+        {% if received_interests.count %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ received_interests.count }}
+            </span>
+        {% endif %}
+    </a>
+</div>
+
+
+  <!-- Profiles Grid -->
+  <div class="row gx-3 gy-3">
+    {% for prof in page_obj %}
+      <div class="col-12 col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-2 px-2">
+            <div class="row g-2 align-items-center">
+              
+              <!-- Image -->
+              <div class="col-auto text-center">
+                {% if prof.photos.all %}
+                  <img src="{{ prof.photos.all.0.image.url }}" alt="{{ prof.full_name }}" class="rounded" style="width:100px; height:120px; object-fit:cover;">
+                {% else %}
+                  <div class="bg-primary bg-opacity-10 rounded d-flex align-items-center justify-content-center text-primary fw-bold" style="width:100px; height:120px; font-size:2rem;">
+                    {{ prof.full_name|slice:":1" }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Info -->
+              <div class="col">
+                <div class="mb-1">
+                  <a href="{% url 'profile_detail' prof.pk %}" class="fw-bold text-primary text-decoration-none">
+                    {{ prof.full_name }} (KVM{{ prof.id }})
+                  </a>
+                </div>
+
+                <div class="mb-1">
+                  <span class="badge bg-primary">
+                    {% if prof.shakha %}{{ prof.shakha.name }}{% else %}NoShakha{% endif %}
+                  </span>
+                  {% if prof.status == 'A' %}
+                    <span class="badge bg-success">Verified</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Pending</span>
+                  {% endif %}
+                </div>
+
+                <p class="text-muted small mb-1">
+                  {{ prof.age }} yrs · Education: {{ prof.education|default:"-" }}
+                </p>
+
+                    <!-- Action Buttons -->
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if not show_sent_filter %}
+                                <!-- Mutual matches: allow call & WhatsApp + Cancel Match -->
+                                <a href="tel:{{ prof.profile_owner.phone }}" class="btn btn-outline-success btn-sm flex-grow-1">Call</a>
+                                <a href="https://wa.me/{{ prof.profile_owner.phone }}" target="_blank" class="btn btn-outline-success btn-sm flex-grow-1">WhatsApp</a>
+
+                                <form method="post" action="{% url 'cancel_match' prof.id %}" style="flex-grow:1">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger w-100">Cancel Match</button>
+                                </form>
+                            {% else %}
+                                <!-- Pending sent interest: only view + cancel -->
+                                <a href="{% url 'profile_detail' prof.pk %}" class="btn btn-outline-primary btn-sm flex-grow-1">View Profile</a>
+
+                                {% for interest in user.profile.sent_interests.all %}
+                                    {% if interest.to_profile.id == prof.id and interest.accepted == None %}
+                                    <form method="post" action="{% url 'cancel_sent_interest' interest.id %}" style="flex-grow:1">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger w-100">Cancel Request</button>
+                                    </form>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+
+                <small class="text-muted d-block mt-1">Last active: {{ prof.updated_at|timesince }} ago</small>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-secondary text-center">No profiles found matching your filters.</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if show_sent_filter %}&filter=sent{% endif %}">Previous</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if show_sent_filter %}&filter=sent{% endif %}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if show_sent_filter %}&filter=sent{% endif %}">Next</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

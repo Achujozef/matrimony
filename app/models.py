@@ -152,7 +152,7 @@ class Interest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     accepted = models.BooleanField(null=True, blank=True)  # None: pending, True: accepted, False: declined
     accepted_at = models.DateTimeField(null=True, blank=True)
-
+    cancelled = models.BooleanField(default=False)
     class Meta:
         unique_together = ('from_profile', 'to_profile')  # prevents duplicate interests
 
@@ -163,6 +163,11 @@ class Interest(models.Model):
 
     def decline(self):
         self.accepted = False
+        self.save()
+
+    
+    def cancel(self):
+        self.cancelled = True
         self.save()
 
     def __str__(self):

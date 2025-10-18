@@ -14,7 +14,9 @@ urlpatterns = [
 
     path("my-profile/", my_profile_view, name="my_profile"),
     path("premium/", premium_view, name="premium"),
-
+    path('matches/', MatchedProfilesView.as_view(), name='matches_list'),
+    path('interest/cancel/<int:interest_id>/', CancelSentInterestView.as_view(), name='cancel_sent_interest'),
+    path('match/cancel/<int:match_id>/', CancelMatchView.as_view(), name='cancel_match'),
     path('interest/<int:pk>/accept/', accept_interest, name='accept_interest'),
     path('interest/<int:pk>/reject/', reject_interest, name='reject_interest'),
 
