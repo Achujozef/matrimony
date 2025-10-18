@@ -106,6 +106,27 @@
     .brand-card { min-height: auto; padding: 1rem; }
     .form-card { padding: 1rem; }
   }
+    /* Adjust vertical spacing on small screens */
+  @media (max-width: 768px) {
+    body {
+      align-items: flex-start;     /* stop perfect centering */
+      padding-top: 3.5rem;         /* extra breathing space on top */
+      padding-bottom: 2rem;
+    }
+
+    .center-shell {
+      padding-top: 0;              /* no double spacing inside wrapper */
+    }
+
+    .register-wrap {
+      margin-top: 0;
+    }
+
+    .brand-card, .form-card {
+      margin-top: 0.5rem;
+    }
+  }
+
 </style>
 </head>
 <body>

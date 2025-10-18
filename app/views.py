@@ -639,8 +639,20 @@ def my_profile_view(request):
     user_profile, _ = Profile.objects.get_or_create(user=request.user)
     matrimonial, _ = MatrimonialProfile.objects.get_or_create(profile_owner=user_profile)
 
-    if request.method == "POST":
-        # Profile fields
+    if request.method == "POST" and request.FILES.getlist("photos"):
+        # Handle photo uploads (AJAX or standard)
+        for file in request.FILES.getlist("photos"):
+            MatrimonialPhoto.objects.create(matrimonial_profile=matrimonial, image=file)
+        return JsonResponse({"success": True})
+
+    if request.method == "POST" and request.POST.get("delete_photo_id"):
+        # Handle photo deletion
+        photo_id = request.POST.get("delete_photo_id")
+        MatrimonialPhoto.objects.filter(id=photo_id, matrimonial_profile=matrimonial).delete()
+        return JsonResponse({"deleted": True})
+
+    if request.method == "POST" and not request.FILES:
+        # Normal profile form submission
         user_profile.phone = request.POST.get("phone", "")
         user_profile.address = request.POST.get("address", "")
         shakha_id = request.POST.get("shakha")
@@ -648,7 +660,6 @@ def my_profile_view(request):
         user_profile.position = request.POST.get("position", "")
         user_profile.save()
 
-        # Matrimonial fields
         matrimonial.full_name = request.POST.get("full_name", "")
         matrimonial.dob = request.POST.get("dob") or None
         matrimonial.gender = request.POST.get("gender", "M")
@@ -670,12 +681,13 @@ def my_profile_view(request):
         return redirect("my_profile")
 
     shakhas = Shakha.objects.all()
+    photos = matrimonial.photos.all()
     return render(request, "my_profile.html", {
         "profile": user_profile,
         "matrimonial": matrimonial,
         "shakhas": shakhas,
+        "photos": photos,
     })
-
 
 
 @login_required

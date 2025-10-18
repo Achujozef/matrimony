@@ -1,113 +1,66 @@
 {% extends 'base.html' %}
 {% block title %}My Profile - Kerala Vishwakarma{% endblock %}
+
 {% block content %}
-
-<style>
-  body {
-    background: #f4f7fb;
-  }
-
-  .profile-card {
-    background: #fff;
-    border-radius: 18px;
-    padding: 2rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-  }
-
-  .profile-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-  }
-
-  h4 {
-    font-weight: 700;
-    color: #0d6efd;
-  }
-
-  h6 {
-    color: #495057;
-    font-weight: 600;
-  }
-
-  .form-label {
-    font-weight: 500;
-    color: #444;
-  }
-
-  .form-control, .form-select {
-    border-radius: 10px;
-    border: 1px solid #d6d8da;
-    transition: 0.2s ease;
-  }
-
-  .form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
-  }
-
-  textarea.form-control {
-    resize: none;
-  }
-
-  .btn-pill {
-    border-radius: 50px;
-  }
-
-  .btn-outline-secondary {
-    border-radius: 50px;
-  }
-
-  .back-btn {
-    background: linear-gradient(45deg, #198754, #0d6efd);
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 8px 18px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: 0.3s;
-  }
-
-  .back-btn:hover {
-    background: linear-gradient(45deg, #157347, #0b5ed7);
-    color: #fff;
-  }
-
-  @media (max-width: 768px) {
-    .profile-card {
-      padding: 1.5rem;
-    }
-    h4 {
-      font-size: 1.3rem;
-    }
-  }
-</style>
-
-<div class="container py-4">
+<div class="w-100 py-4 bg-light min-vh-100">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">My Profile</h4>
-    <a href="{% url 'dashboard' %}" class="back-btn">
+    <h4 class="mb-0 fw-bold text-primary">My Profile</h4>
+    <a href="{% url 'dashboard' %}" class="btn btn-success bg-gradient rounded-pill px-3 d-flex align-items-center">
       ← Back to Explore
     </a>
   </div>
 
-  <div class="profile-card">
+  <div class="bg-white rounded-4 shadow p-4 p-md-5">
     <form method="POST" enctype="multipart/form-data" class="row g-4">
       {% csrf_token %}
 
+      <!-- Profile Photo Section -->
+      <div class="col-12 mb-4">
+        <h6 class="border-bottom pb-2 mb-3 fw-semibold text-secondary">Profile Photos</h6>
+
+        <div id="photo-upload-area"
+             class="upload-area border border-2 border-dashed rounded-4 p-4 text-center bg-light-subtle">
+          <input type="file" id="photoInput" name="photos" multiple accept="image/*" hidden>
+          <i class="bi bi-cloud-arrow-up text-primary fs-1"></i>
+          <p class="fw-semibold text-muted mb-1">Drag & drop your photos here or</p>
+          <button type="button" class="btn btn-outline-primary rounded-pill px-3"
+                  onclick="document.getElementById('photoInput').click();">Browse</button>
+          <p class="small text-secondary mt-2 mb-0">You can upload multiple images.</p>
+        </div>
+
+        <!-- Preview Grid -->
+        <div id="photoPreview"
+             class="photo-grid row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mt-3">
+          {% for p in photos %}
+            <div class="col">
+              <div class="photo-card position-relative rounded-4 overflow-hidden shadow-sm border">
+                <img src="{{ p.image.url }}" alt="Profile Photo"
+                     class="img-fluid w-100" style="height:120px;object-fit:cover;">
+                <button type="button" class="btn btn-light btn-sm position-absolute top-0 end-0 m-1 rounded-circle border text-danger"
+                        onclick="deletePhoto('{{ p.id }}')">
+                  <i class="bi bi-x-lg">❌</i>
+                </button>
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted text-center small mt-2">No photos uploaded yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
       <!-- Section 1 -->
       <div class="col-12">
-        <h6 class="border-bottom pb-2 mb-3">Personal Info</h6>
+        <h6 class="border-bottom pb-2 mb-3 fw-semibold text-secondary">Personal Info</h6>
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Full Name</label>
-        <input type="text" name="full_name" value="{{ matrimonial.full_name }}" class="form-control" required>
+        <label class="form-label fw-medium text-secondary">Full Name</label>
+        <input type="text" name="full_name" value="{{ matrimonial.full_name }}" class="form-control rounded-3" required>
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">Gender</label>
-        <select name="gender" class="form-select">
+        <label class="form-label fw-medium text-secondary">Gender</label>
+        <select name="gender" class="form-select rounded-3">
           <option value="M" {% if matrimonial.gender == 'M' %}selected{% endif %}>Male</option>
           <option value="F" {% if matrimonial.gender == 'F' %}selected{% endif %}>Female</option>
           <option value="O" {% if matrimonial.gender == 'O' %}selected{% endif %}>Other</option>
@@ -115,18 +68,18 @@
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">Date of Birth</label>
-        <input type="date" name="dob" value="{{ matrimonial.dob|date:'Y-m-d' }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Date of Birth</label>
+        <input type="date" name="dob" value="{{ matrimonial.dob|date:'Y-m-d' }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">Age</label>
-        <input type="number" name="age" value="{{ matrimonial.age }}" min="18" max="100" class="form-control">
+        <label class="form-label fw-medium text-secondary">Age</label>
+        <input type="number" name="age" value="{{ matrimonial.age }}" min="18" max="100" class="form-control rounded-3">
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">Marital Status</label>
-        <select class="form-select" name="maritial_status" required>
+        <label class="form-label fw-medium text-secondary">Marital Status</label>
+        <select class="form-select rounded-3" name="maritial_status" required>
           <option value="">-- Select --</option>
           <option value="Never Married" {% if matrimonial.maritial_status == "Never Married" %}selected{% endif %}>Never Married</option>
           <option value="Divorced" {% if matrimonial.maritial_status == "Divorced" %}selected{% endif %}>Divorced</option>
@@ -136,63 +89,63 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Native Place</label>
-        <input type="text" name="native_place" value="{{ matrimonial.native_place }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Native Place</label>
+        <input type="text" name="native_place" value="{{ matrimonial.native_place }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Education</label>
-        <input type="text" name="education" value="{{ matrimonial.education }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Education</label>
+        <input type="text" name="education" value="{{ matrimonial.education }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Occupation</label>
-        <input type="text" name="occupation" value="{{ matrimonial.occupation }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Occupation</label>
+        <input type="text" name="occupation" value="{{ matrimonial.occupation }}" class="form-control rounded-3">
       </div>
 
       <div class="col-12">
-        <label class="form-label">About Me</label>
-        <textarea name="about" class="form-control" rows="3">{{ matrimonial.about }}</textarea>
+        <label class="form-label fw-medium text-secondary">About Me</label>
+        <textarea name="about" class="form-control rounded-3" rows="3">{{ matrimonial.about }}</textarea>
       </div>
 
-      <!-- Section 2 -->
+      <!-- Family Details -->
       <div class="col-12 mt-4">
-        <h6 class="border-bottom pb-2 mb-3">Family Details</h6>
+        <h6 class="border-bottom pb-2 mb-3 fw-semibold text-secondary">Family Details</h6>
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Father's Name</label>
-        <input type="text" name="father_name" value="{{ matrimonial.father_name }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Father's Name</label>
+        <input type="text" name="father_name" value="{{ matrimonial.father_name }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Mother's Name</label>
-        <input type="text" name="mother_name" value="{{ matrimonial.mother_name }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Mother's Name</label>
+        <input type="text" name="mother_name" value="{{ matrimonial.mother_name }}" class="form-control rounded-3">
       </div>
 
       <div class="col-12">
-        <label class="form-label">Family Details</label>
-        <textarea name="family_details" class="form-control" rows="3">{{ matrimonial.family_details }}</textarea>
+        <label class="form-label fw-medium text-secondary">Family Details</label>
+        <textarea name="family_details" class="form-control rounded-3" rows="3">{{ matrimonial.family_details }}</textarea>
       </div>
 
-      <!-- Section 3 -->
+      <!-- Contact Info -->
       <div class="col-12 mt-4">
-        <h6 class="border-bottom pb-2 mb-3">Contact Info</h6>
+        <h6 class="border-bottom pb-2 mb-3 fw-semibold text-secondary">Contact Info</h6>
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Phone</label>
-        <input type="text" name="phone" value="{{ profile.phone }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Phone</label>
+        <input type="text" name="phone" value="{{ profile.phone }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Address</label>
-        <input type="text" name="address" value="{{ profile.address }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Address</label>
+        <input type="text" name="address" value="{{ profile.address }}" class="form-control rounded-3">
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Shakha</label>
-        <select name="shakha" class="form-select">
+        <label class="form-label fw-medium text-secondary">Shakha</label>
+        <select name="shakha" class="form-select rounded-3">
           <option value="">-- Select Shakha --</option>
           {% for s in shakhas %}
             <option value="{{ s.id }}" {% if profile.shakha and profile.shakha.id == s.id %}selected{% endif %}>{{ s.name }}</option>
@@ -201,29 +154,29 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Position / Role</label>
-        <input type="text" name="position" value="{{ profile.position }}" class="form-control">
+        <label class="form-label fw-medium text-secondary">Position / Role</label>
+        <input type="text" name="position" value="{{ profile.position }}" class="form-control rounded-3">
       </div>
 
-      <!-- Section 4 -->
+      <!-- Privacy -->
       <div class="col-12 mt-4">
-        <h6 class="border-bottom pb-2 mb-3">Privacy Settings</h6>
+        <h6 class="border-bottom pb-2 mb-3 fw-semibold text-secondary">Privacy Settings</h6>
       </div>
 
       <div class="col-md-6 form-check form-switch">
         <input class="form-check-input" type="checkbox" name="hide_photos_until_connection" id="hidePhotos"
                {% if matrimonial.hide_photos_until_connection %}checked{% endif %}>
-        <label class="form-check-label" for="hidePhotos">Hide photos until connection</label>
+        <label class="form-check-label fw-medium text-secondary" for="hidePhotos">Hide photos until connection</label>
       </div>
 
       <div class="col-md-6 form-check form-switch">
         <input class="form-check-input" type="checkbox" name="hide_phone_until_connection" id="hidePhone"
                {% if matrimonial.hide_phone_until_connection %}checked{% endif %}>
-        <label class="form-check-label" for="hidePhone">Hide phone number until connection</label>
+        <label class="form-check-label fw-medium text-secondary" for="hidePhone">Hide phone number until connection</label>
       </div>
 
       <div class="col-12 text-end mt-4">
-        <button type="submit" class="btn btn-primary btn-pill px-4">
+        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
           💾 Save Changes
         </button>
       </div>
@@ -231,4 +184,37 @@
   </div>
 </div>
 
+<!-- JavaScript -->
+<script>
+const uploadArea = document.getElementById("photo-upload-area");
+const input = document.getElementById("photoInput");
+
+uploadArea.addEventListener("dragover", e => {
+  e.preventDefault();
+  uploadArea.classList.add("border-primary", "bg-light");
+});
+uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("border-primary", "bg-light"));
+uploadArea.addEventListener("drop", e => {
+  e.preventDefault();
+  uploadArea.classList.remove("border-primary", "bg-light");
+  handleFiles(e.dataTransfer.files);
+});
+input.addEventListener("change", () => handleFiles(input.files));
+
+function handleFiles(files) {
+  const formData = new FormData();
+  for (let file of files) formData.append("photos", file);
+  fetch("", { method: "POST", body: formData, headers: {"X-CSRFToken": "{{ csrf_token }}"} })
+    .then(r => r.json())
+    .then(() => location.reload());
+}
+
+function deletePhoto(id) {
+  const formData = new FormData();
+  formData.append("delete_photo_id", id);
+  fetch("", { method: "POST", body: formData, headers: {"X-CSRFToken": "{{ csrf_token }}"} })
+    .then(r => r.json())
+    .then(() => location.reload());
+}
+</script>
 {% endblock %}

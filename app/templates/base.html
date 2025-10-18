@@ -1,4 +1,3 @@
-{# templates/base.html #}
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,7 +9,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    /* Design tokens */
     :root{
       --brand: #0b5ed7;
       --brand-600: #084298;
@@ -24,7 +22,7 @@
       --container-width: 1150px;
     }
 
-    html,body { height:100%; }
+    html, body { height:100%; }
     body{
       margin:0;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -32,135 +30,248 @@
       color:#222;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
-      padding-top:72px; /* space for fixed navbar */
+      {% comment %} padding-top:72px; {% endcomment %}
       line-height:1.45;
     }
 
-    /* Navbar */
     .site-nav {
       backdrop-filter: blur(6px);
       background: rgba(255,255,255,0.88);
       border-bottom: 1px solid rgba(11,94,215,0.04);
       box-shadow: 0 6px 18px rgba(10,20,50,0.04);
     }
-    .site-brand{
-      display:flex; gap:.6rem; align-items:center; text-decoration:none;
-      color:var(--brand); font-weight:700; font-size:1.05rem;
-    }
-    .brand-mark {
-      width:44px; height:44px; display:grid; place-items:center;
-      border-radius:10px; color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand-600));
-      box-shadow: 0 8px 20px rgba(11,94,215,0.12); font-weight:700;
-    }
+    .site-brand { display:flex; gap:.5rem; align-items:center; text-decoration:none; color:var(--brand); font-weight:700; font-size:1.05rem; }
+    .brand-mark { width:44px; height:44px; display:grid; place-items:center; border-radius:10px; color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand-600)); box-shadow: 0 8px 20px rgba(11,94,215,0.12); font-weight:700; }
 
     .container-max { max-width: var(--container-width); margin: 0 auto; padding: 1rem; }
 
-    /* Cards and helpers */
-    .card-rounded { background:var(--surface); border-radius:var(--radius); box-shadow: var(--shadow-soft); }
-    .card-elev { box-shadow: var(--shadow-strong); }
-    .small-muted { color:var(--muted); font-size:.92rem; }
-    .btn-pill { border-radius:999px; }
+    footer a:hover { text-decoration: underline !important; }
 
-    /* Toast container (shared) */
-    #serverToasts { position: fixed; top: 1rem; right: 1rem; z-index: 1400; width: 360px; }
-    @media (max-width:540px) { #serverToasts { width: calc(100% - 2rem); left:1rem; right:1rem; } }
-
-    /* Misc */
-    @media (max-width: 991px){
+    @media(max-width: 991px){
+      body {}
       .container-max{ padding-left:0.75rem; padding-right:0.75rem; }
-      body { padding-top:64px; }
       .brand-mark { width:40px; height:40px; }
     }
+
+    @media(max-width: 767px){
+      footer .d-flex.flex-md-row { flex-direction: column; text-align: center; gap: 0.5rem; }
+      footer .col-md-2, footer .col-md-3, footer .col-md-4 { text-align: center; }
+    }
+    @media (min-width: 992px) {
+  .site-nav .container-max {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .site-brand {
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 767px) {
+  .site-brand {
+    display: none !important;
+  }
+}
+/* Prevent navbar height from expanding when dropdown opens */
+.navbar {
+  position: relative;
+  {% comment %} z-index: 1030; {% endcomment %}
+}
+
+.navbar .dropdown-menu {
+  position: absolute !important;
+  top: 100%;
+  right: 0;
+  left: auto;
+  z-index: 1050;
+  transform: translateY(5px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  border-radius: 10px;
+}
+
+/* Optional: smooth dropdown animation */
+.dropdown-menu.show {
+  opacity: 1;
+  transform: translateY(5px);
+  transition: all 0.2s ease;
+}
+
   </style>
 
   {% block head %}{% endblock %}
 </head>
 <body>
+<nav class="navbar site-nav fixed-top py-2">
+  <div class="container-max w-100 d-flex align-items-center justify-content-between flex-wrap">
 
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg site-nav fixed-top">
-    <div class="container-max d-flex align-items-center">
-      <a class="site-brand" href="{% url 'dashboard' %}">
-        <div class="brand-mark">KV</div>
-        <div>
-          Kerala Vishwakarma
-          <div class="small-muted" style="font-weight:600;font-size:.8rem">Community Matrimonial</div>
-        </div>
-      </a>
+    <!-- Brand (Hidden completely on mobile) -->
+    <a class="site-brand d-none d-md-flex align-items-center mb-2 mb-md-0" href="{% url 'dashboard' %}">
+      <div class="brand-mark me-2">KV</div>
+      <div class="lh-sm">
+        Kerala Vishwakarma
+        <div class="small text-muted fw-semibold">Community Matrimonial</div>
+      </div>
+    </a>
 
-      <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
-        <span class="navbar-toggler-icon"></span>
+    <!-- Desktop Search -->
+    <form class="d-none d-lg-flex flex-grow-1 mx-4" method="get" action="{% url 'dashboard' %}">
+      <input 
+        name="q" 
+        class="form-control form-control-sm" 
+        type="search" 
+        placeholder="Search name, education or job" 
+        value="{{ request.GET.q|default:'' }}" 
+        style="border-radius:999px 0 0 999px; min-width:280px;"
+      >
+      <button 
+        class="btn btn-sm btn-primary" 
+        type="submit" 
+        style="border-radius:0 999px 999px 0;"
+      >
+        Search
       </button>
+    </form>
 
-      <div class="collapse navbar-collapse ms-3">
-        <ul class="navbar-nav ms-auto align-items-center">
-          <li class="nav-item me-2 d-none d-md-block">
-            <form class="d-flex" method="get" action="{% url 'dashboard' %}">
-              <input name="q" class="form-control form-control-sm" style="min-width:220px;border-radius:999px 0 0 999px" type="search" placeholder="Search name, education or job" value="{{ request.GET.q|default:'' }}">
-              <button class="btn btn-sm btn-primary btn-pill" style="border-radius:0 999px 999px 0" type="submit">Search</button>
-            </form>
-          </li>
+    <!-- Desktop Menu -->
+    <ul class="navbar-nav d-none d-lg-flex align-items-center ms-auto">
+      {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+            {{ user.get_full_name|default:user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+            <li><a class="dropdown-item" href="{% url 'my_profile' %}">My Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+          </ul>
+        </li>
+      {% else %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+        <li class="nav-item ms-2"><a class="btn btn-primary btn-sm rounded-pill text-white" href="{% url 'register' %}">Register</a></li>
+      {% endif %}
+    </ul>
 
-          {% if user.is_authenticated %}
-            <li class="nav-item dropdown ms-2">
-              <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {{ user.get_full_name|default:user.username }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                <li><a class="dropdown-item" href="{% url 'my_profile' %}">My Profile</a></li>
-                <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-              </ul>
-            </li>
-          {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-            <li class="nav-item ms-2 d-none d-md-block"><a class="btn btn-primary btn-sm btn-pill text-white" href="{% url 'register' %}">Register</a></li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Offcanvas mobile -->
-  <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="mobileMenuLabel">Menu</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-      <form class="mb-3 d-flex" method="get" action="{% url 'dashboard' %}">
-        <input name="q" class="form-control form-control-sm" type="search" placeholder="Search..." value="{{ request.GET.q|default:'' }}">
-        <button class="btn btn-primary btn-sm ms-2" type="submit">Go</button>
+    <!-- Mobile Search + Menu -->
+    <div class="d-flex d-md-flex d-lg-none w-100 justify-content-between mt-1">
+      <form class="d-flex flex-grow-1 me-2" method="get" action="{% url 'dashboard' %}">
+        <input 
+          name="q" 
+          class="form-control form-control-sm me-1" 
+          type="search" 
+          placeholder="Search..." 
+          value="{{ request.GET.q|default:'' }}">
+        <button class="btn btn-primary btn-sm" type="submit">Search</button>
       </form>
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+        ☰
+      </button>
+    </div>
 
-      <ul class="list-unstyled">
-        <li class="mb-2"><a class="d-block py-2 px-2 rounded" href="{% url 'dashboard' %}">Explore Profiles</a></li>
-        {% if user.is_authenticated %}
-          <li class="mb-2"><a class="d-block py-2 px-2 rounded" href="#">My Profile</a></li>
-          <li class="mb-2"><a class="d-block py-2 px-2 rounded" href="{% url 'logout' %}">Logout</a></li>
-        {% else %}
-          <li class="mb-2"><a class="d-block py-2 px-2 rounded" href="{% url 'login' %}">Login</a></li>
-          <li class="mb-2"><a class="d-block py-2 px-2 rounded btn btn-outline-primary" href="{% url 'register' %}">Register</a></li>
-        {% endif %}
-      </ul>
+  </div>
+</nav>
 
-      <hr/>
-      <div class="small-muted">
-        Community-first matrimonial — verified by your shakha president. Privacy-first: photos & phone revealed only with consent.
-      </div>
+
+<!-- Offcanvas Mobile Menu -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="mobileMenuLabel">Menu</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form class="mb-3 d-flex" method="get" action="{% url 'dashboard' %}">
+      <input name="q" class="form-control form-control-sm" type="search" placeholder="Search..." value="{{ request.GET.q|default:'' }}">
+      <button class="btn btn-primary btn-sm ms-2" type="submit">Go</button>
+    </form>
+
+    <div class="d-grid gap-2">
+      <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'dashboard' %}'">Explore Profiles</button>
+      {% if user.is_authenticated %}
+        <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'my_profile' %}'">My Profile</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="location.href='{% url 'logout' %}'">Logout</button>
+      {% else %}
+        <button class="btn btn-outline-success btn-sm" onclick="location.href='{% url 'login' %}'">Login</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="location.href='{% url 'register' %}'">Register</button>
+      {% endif %}
+    </div>
+
+    <hr/>
+    <div class="small-muted text-center">
+      Community-first matrimonial — verified by your shakha president. Privacy-first: photos & phone revealed only with consent.
     </div>
   </div>
+</div>
+
 
   <!-- MAIN container -->
   <main class="container-max my-4">
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Shared toast container used by server and pages -->
+<!-- Footer -->
+<footer class="mt-5 bg-white shadow-sm">
+  <div class="container-max py-4">
+    <div class="row gy-4 text-start">
+
+      <!-- Brand & Info -->
+      <div class="col-md-4">
+        <a href="{% url 'dashboard' %}" class="d-flex align-items-center mb-2 text-decoration-none">
+          <div class="brand-mark me-2">KV</div>
+          <div class="fw-bold" style="font-size:1.1rem">Kerala Vishwakarma</div>
+        </a>
+        <p class="small-muted mb-1">Community-first matrimonial platform. Verified by shakha presidents.</p>
+        <p class="small-muted mb-0">Privacy-first: contact & photos revealed only with consent.</p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="col-md-2">
+        <h6 class="fw-bold mb-2">Quick Links</h6>
+        <ul class="list-unstyled small-muted mb-0">
+          <li><a href="{% url 'dashboard' %}" class="text-decoration-none text-muted d-block mb-1">Explore Profiles</a></li>
+          {% if user.is_authenticated %}
+            <li><a href="{% url 'my_profile' %}" class="text-decoration-none text-muted d-block mb-1">My Profile</a></li>
+            <li><a href="{% url 'logout' %}" class="text-decoration-none text-muted d-block mb-1">Logout</a></li>
+          {% else %}
+            <li><a href="{% url 'login' %}" class="text-decoration-none text-muted d-block mb-1">Login</a></li>
+            <li><a href="{% url 'register' %}" class="text-decoration-none text-muted d-block mb-1">Register</a></li>
+          {% endif %}
+          <li><a href="mailto:support@example.com" class="text-decoration-none text-muted d-block">Support</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="col-md-3">
+        <h6 class="fw-bold mb-2">Contact</h6>
+        <p class="small-muted mb-1">📞 +91 6282 954 359</p>
+        <p class="small-muted mb-1">
+          📧 <a href="mailto:getorgifresh@gmail.com" class="text-decoration-none text-muted">ecomicx@gmail.com</a>
+        </p>
+        <p class="small-muted mb-0">📍 Thiruvananthapuram, Kerala</p>
+      </div>
+
+      <!-- Follow Us -->
+      <div class="col-md-3">
+        <h6 class="fw-bold mb-2">Follow Us</h6>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="https://www.facebook.com/people/Get-Orgi/100083603130941/" target="_blank" class="btn btn-outline-primary btn-sm btn-pill">Facebook</a>
+          <a href="#" class="btn btn-outline-info btn-sm btn-pill">Instagram</a>
+        </div>
+      </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start small-muted text-start">
+      <p class="mb-2 mb-md-0">&copy; {{ now.year }} Kerala Vishwakarma. All rights reserved.</p>
+      <p class="mb-0">Designed with ❤️ by EComicx</p>
+    </div>
+  </div>
+</footer>
+
+
   <div id="serverToasts" aria-live="polite" aria-atomic="true"></div>
 
-  {# Render server messages into #serverToasts (no inline ternary). #}
   {% if messages %}
     <script>
       document.addEventListener('DOMContentLoaded', function(){
@@ -177,7 +288,7 @@
             div.setAttribute('aria-live','assertive');
             div.setAttribute('aria-atomic','true');
             div.innerHTML = `<div class="d-flex"><div class="toast-body">{{ message|escapejs }}</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
             holder.appendChild(div);
             try { new bootstrap.Toast(div, { delay: 4200 }).show(); } catch(e){ console.warn(e); }
           })();
