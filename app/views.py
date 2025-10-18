@@ -536,7 +536,13 @@ class ProfileDetailView(DetailView):
             # Mutual interest rules
             if (sent and sent.accepted) or (sent and owner_to_viewer) or (owner_to_viewer and owner_to_viewer.accepted):
                 ctx['mutual_interest'] = True
+            ctx['can_view_hidden_photos'] = False
 
+            # Show hidden photos if profile owner allows or mutual interest exists
+            if not profile_obj.hide_photos_until_connection:
+                ctx['can_view_hidden_photos'] = True
+            elif ctx.get('mutual_interest'):
+                ctx['can_view_hidden_photos'] = True
             # Contact only if mutual
             if ctx['mutual_interest']:
                 ctx['can_view_contact'] = True

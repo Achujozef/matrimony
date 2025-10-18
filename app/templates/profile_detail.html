@@ -14,14 +14,15 @@
       <div class="carousel-inner">
         {% for photo in profile_obj.photos.all %}
           <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            {% if mutual_interest or forloop.first %}
-              <img src="{{ photo.image.url }}" class="d-block w-100" style="object-fit:cover;height:320px;">
-            {% else %}
-              <img src="{{ photo.image.url }}" class="d-block w-100 blurred" style="object-fit:cover;height:320px;">
-              <div class="photo-overlay d-flex flex-column justify-content-center align-items-center">
-                <p class="mb-2">Private photo — visible after Match</p>
-              </div>
-            {% endif %}
+          {% if mutual_interest or can_view_hidden_photos or forloop.first %}
+            <img src="{{ photo.image.url }}" class="d-block w-100" style="object-fit:cover;height:320px;">
+          {% else %}
+            <img src="{{ photo.image.url }}" class="d-block w-100 blurred" style="object-fit:cover;height:320px;">
+            <div class="photo-overlay d-flex flex-column justify-content-center align-items-center">
+              <p class="mb-2">Private photo — visible after Match</p>
+            </div>
+          {% endif %}
+
           </div>
         {% endfor %}
       </div>

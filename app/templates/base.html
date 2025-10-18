@@ -95,13 +95,39 @@
   transform: translateY(5px);
   transition: all 0.2s ease;
 }
+.site-nav {
+  position: fixed;       /* ensures navbar sticks on top */
+  top: 0;                /* stick to top */
+  left: 0;
+  right: 0;
+  z-index: 1030;         /* above content */
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,0.88);
+  border-bottom: 1px solid rgba(11,94,215,0.04);
+  box-shadow: 0 6px 18px rgba(10,20,50,0.04);
+}
+body {
+    padding-top: 42px; /* desktop navbar height */
+}
+
+@media (max-width: 991px) {
+    body {
+        padding-top: 44px; /* slightly smaller for tablets */
+    }
+}
+
+@media (max-width: 767px) {
+    body {
+        padding-top: 36px; /* mobile navbar height */
+    }
+}
 
   </style>
 
   {% block head %}{% endblock %}
 </head>
 <body>
-<nav class="navbar site-nav fixed-top py-2">
+<nav class="navbar site-nav fixed-top py-0">
   <div class="container-max w-100 d-flex align-items-center justify-content-between flex-wrap">
 
     <!-- Brand (Hidden completely on mobile) -->
