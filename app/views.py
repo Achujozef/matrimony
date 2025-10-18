@@ -210,26 +210,45 @@ class UserLoginView(View):
             # Get user by email
             try:
                 user_obj = User.objects.get(email=email)
-                username = user_obj.username  # authenticate still expects username
+                username = user_obj.username
             except User.DoesNotExist:
                 messages.error(request, "Invalid email or password.")
                 return render(request, self.template_name)
 
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                if hasattr(user, 'profile') and user.profile.is_blocked:
+                profile = getattr(user, 'profile', None)
+                if profile is None:
+                    messages.error(request, "No profile associated with this account.")
+                    return render(request, self.template_name)
+
+                # Check if blocked
+                if profile.is_blocked:
                     messages.error(request, "Your account has been blocked. Contact admin.")
                     return render(request, self.template_name)
 
+                # Check MatrimonialProfile approval
+                try:
+                    matrimony = profile.matrimonial_profile
+                    if matrimony.status != 'A':
+                        messages.error(request, "Your profile has not been approved by the shakha president yet.")
+                        return render(request, self.template_name)
+                except MatrimonialProfile.DoesNotExist:
+                    messages.error(request, "You need to create a matrimonial profile first.")
+                    return render(request, self.template_name)
+
+                # Login successful
                 login(request, user)
                 messages.success(request, f"Welcome {user.username}!")
                 return redirect('dashboard')
             else:
                 messages.error(request, "Invalid email or password.")
                 return render(request, self.template_name)
+
         except Exception as e:
             messages.error(request, f"Login failed: {str(e)}")
             return render(request, self.template_name)
+
 
 
 # ----------------- Logout View -----------------
