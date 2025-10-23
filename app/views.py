@@ -402,6 +402,13 @@ class DashboardView(LoginRequiredMixin, View):
     login_url = '/login/'
 
     def get(self, request):
+        profile = getattr(request.user, 'profile', None)
+
+        # Check if profile exists and is linked to a MatrimonialProfile
+        if not profile or not hasattr(profile, 'matrimonial_profile'):
+            # If user is shakha president or admin, redirect them to login
+            return redirect(f"{self.login_url}?error=unauthorized")
+    
         filters = {
             'q': request.GET.get('q',''),
             'gender': request.GET.get('gender',''),
@@ -457,7 +464,8 @@ class DashboardView(LoginRequiredMixin, View):
         is_premium = False
         sent_interests = []
         received_interests = []
-
+        pending_received_count = 0
+        
         if request.user.is_authenticated:
             if profile:
                 active_subs = profile.premium_subscriptions.filter(status='A', end_date__gt=timezone.now())
