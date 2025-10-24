@@ -192,65 +192,183 @@ class UserRegisterView(View):
             return redirect('register')
 
 # ----------------- Login View -----------------
+# class UserLoginView(View):
+#     template_name = 'login.html'
+
+#     def get(self, request):
+#         return render(request, self.template_name)
+
+#     def post(self, request):
+#         try:
+#             email = request.POST.get('email', '').strip()
+#             password = request.POST.get('password', '').strip()
+#             print(f"Login attempt with email={email}")
+
+#             if not email or not password:
+#                 messages.error(request, "Both email and password are required.")
+#                 return render(request, self.template_name)
+
+#             # Get user by email
+#             try:
+#                 user_obj = User.objects.get(email=email)
+#                 username = user_obj.username
+#             except User.DoesNotExist:
+#                 messages.error(request, "Invalid email or password.")
+#                 return render(request, self.template_name)
+
+#             user = authenticate(request, username=username, password=password)
+#             if user is not None:
+#                 profile = getattr(user, 'profile', None)
+#                 if profile is None:
+#                     messages.error(request, "No profile associated with this account.")
+#                     return render(request, self.template_name)
+
+#                 # Check if blocked
+#                 if profile.is_blocked:
+#                     messages.error(request, "Your account has been blocked. Contact admin.")
+#                     return render(request, self.template_name)
+
+#                 # Check MatrimonialProfile approval
+#                 try:
+#                     matrimony = profile.matrimonial_profile
+#                     if matrimony.status != 'A':
+#                         messages.error(request, "Your profile has not been approved by the shakha president yet.")
+#                         return render(request, self.template_name)
+#                 except MatrimonialProfile.DoesNotExist:
+#                     messages.error(request, "You need to create a matrimonial profile first.")
+#                     return render(request, self.template_name)
+
+#                 # Login successful
+#                 login(request, user)
+#                 messages.success(request, f"Welcome {user.username}!")
+#                 return redirect('dashboard')
+#             else:
+#                 messages.error(request, "Invalid email or password.")
+#                 return render(request, self.template_name)
+
+#         except Exception as e:
+#             messages.error(request, f"Login failed: {str(e)}")
+#             return render(request, self.template_name)
+
 class UserLoginView(View):
     template_name = 'login.html'
 
     def get(self, request):
-        return render(request, self.template_name)
+        return render(request, self.template_name, {'shakhas': Shakha.objects.all()})
 
     def post(self, request):
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        if not phone or not password:
+            messages.error(request, "Phone and password are required.")
+            return redirect('login')
+
         try:
-            email = request.POST.get('email', '').strip()
-            password = request.POST.get('password', '').strip()
-            print(f"Login attempt with email={email}")
+            profile = Profile.objects.get(phone=phone)
+            user = authenticate(request, username=profile.user.username, password=password)
+        except Profile.DoesNotExist:
+            messages.error(request, "Invalid phone number or password.")
+            return redirect('login')
 
-            if not email or not password:
-                messages.error(request, "Both email and password are required.")
-                return render(request, self.template_name)
+        if not user:
+            messages.error(request, "Invalid phone number or password.")
+            return redirect('login')
 
-            # Get user by email
-            try:
-                user_obj = User.objects.get(email=email)
-                username = user_obj.username
-            except User.DoesNotExist:
-                messages.error(request, "Invalid email or password.")
-                return render(request, self.template_name)
+        # Check if profile exists
+        if not profile:
+            messages.error(request, "No profile associated with this account.")
+            return redirect('login')
 
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                profile = getattr(user, 'profile', None)
-                if profile is None:
-                    messages.error(request, "No profile associated with this account.")
-                    return render(request, self.template_name)
+        # Check if account is blocked
+        if getattr(profile, 'is_blocked', False):
+            messages.error(request, "Your account has been blocked. Contact admin.")
+            return redirect('login')
 
-                # Check if blocked
-                if profile.is_blocked:
-                    messages.error(request, "Your account has been blocked. Contact admin.")
-                    return render(request, self.template_name)
+        # Check MatrimonialProfile approval
+        try:
+            matrimony = profile.matrimonial_profile
+            if matrimony.status != 'A':  # A = Approved
+                messages.error(request, "Your profile has not been approved by the shakha president yet.")
+                return redirect('login')
+        except MatrimonialProfile.DoesNotExist:
+            messages.error(request, "You need to create a matrimonial profile first.")
+            return redirect('login')
 
-                # Check MatrimonialProfile approval
-                try:
-                    matrimony = profile.matrimonial_profile
-                    if matrimony.status != 'A':
-                        messages.error(request, "Your profile has not been approved by the shakha president yet.")
-                        return render(request, self.template_name)
-                except MatrimonialProfile.DoesNotExist:
-                    messages.error(request, "You need to create a matrimonial profile first.")
-                    return render(request, self.template_name)
-
-                # Login successful
-                login(request, user)
-                messages.success(request, f"Welcome {user.username}!")
-                return redirect('dashboard')
-            else:
-                messages.error(request, "Invalid email or password.")
-                return render(request, self.template_name)
-
-        except Exception as e:
-            messages.error(request, f"Login failed: {str(e)}")
-            return render(request, self.template_name)
+        # Login successful
+        login(request, user)
+        messages.success(request, f"Welcome {user.first_name or user.username}!")
+        return redirect('dashboard')
 
 
+
+class QuickRegisterView(View):
+    def post(self, request):
+        fname = request.POST.get('first_name', '').strip()
+        lname = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        shakha_id = request.POST.get('shakha', '')
+        address = request.POST.get('address', '').strip()
+        password = request.POST.get('password', '')
+        gender = request.POST.get('gender', '').strip()
+
+
+        errors = {}
+
+        # Validate required fields
+        if not gender or gender not in ['M', 'F', 'O']:
+            errors['gender'] = "Please select a valid gender."
+        if not fname:
+            errors['first_name'] = "First name is required."
+        if not lname:
+            errors['last_name'] = "Last name is required."
+        if not phone:
+            errors['phone'] = "Phone number is required."
+        elif Profile.objects.filter(phone=phone).exists():
+            errors['phone'] = "This mobile number is already registered."
+        if not shakha_id:
+            errors['shakha'] = "Please select a Shakha."
+        if not address:
+            errors['address'] = "Address is required."
+        if not password:
+            errors['password'] = "Password is required."
+        elif len(password) < 8:
+            errors['password'] = "Password must be at least 8 characters."
+
+        if errors:
+            print("Error occured : ",errors)
+            return JsonResponse({'status': 'error', 'errors': errors})
+
+        # Ensure unique username
+        base_username = f"{fname.lower()}{phone[-4:]}"
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        # Create user and profiles
+        shakha = Shakha.objects.get(id=shakha_id)
+        email = f"{fname.lower()}.{lname.lower()}@gmail.com"
+
+        user = User.objects.create_user(
+            username=username, email=email, password=password,
+            first_name=fname, last_name=lname
+        )
+
+        profile = Profile.objects.create(
+            user=user, phone=phone, shakha=shakha, address=address
+        )
+
+        MatrimonialProfile.objects.create(
+            profile_owner=profile,
+            full_name=f"{fname} {lname}",
+            shakha=shakha,
+            gender=gender,
+            status='P'
+        )
+
+        return JsonResponse({'status': 'success', 'message': 'Registration successful! Your profile will be verified by your Shakha Officilas.'})
 
 # ----------------- Logout View -----------------
 @method_decorator(login_required, name='dispatch')

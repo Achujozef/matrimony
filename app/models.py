@@ -19,7 +19,7 @@ class Shakha(models.Model):
 # ---------- Extend User: Profile ----------
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=20, blank=True,unique=True)
     address = models.TextField(blank=True)
     shakha = models.ForeignKey(Shakha, on_delete=models.SET_NULL, null=True, blank=True, related_name="members")
     # Role flags

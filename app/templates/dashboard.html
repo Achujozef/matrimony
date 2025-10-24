@@ -8,7 +8,7 @@
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4">
     <div>
       <h3>Explore Profiles</h3>
-      <p class="text-muted">Verified community matches from your selected shakha and beyond.</p>
+      <p class="text-muted">Verified community matches from Union and Sakha Officials</p>
     </div>
 
     <div class="d-flex gap-2 align-items-center">
@@ -25,7 +25,7 @@
           {% endif %}
       </button>
 
-        <a href="{% url 'matches_list' %}" class="btn btn-primary">My Matches</a>
+        <a href="{% url 'matches_list' %}" class="btn btn-primary">Matches</a>
       {% else %}
         <a href="{% url 'login' %}" class="btn btn-primary">Login / Register</a>
       {% endif %}
@@ -380,35 +380,44 @@
     </main>
   </div>
 </div>
-
 <!-- Interests Modal -->
 <div class="modal fade" id="interestsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Received Interests</h5>
+      <div class="modal-header py-2 px-3">
+        <h5 class="modal-title mb-0">Received Interests</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-2">
         {% if received_interests %}
-          <ul class="list-unstyled">
+          <ul class="list-unstyled mb-0">
             {% for interest in received_interests %}
-              <li class="d-flex align-items-center mb-3 p-2 border rounded" id="interest-{{ interest.id }}">
+              <li class="d-flex align-items-center mb-2 p-2 border rounded flex-wrap flex-md-nowrap" id="interest-{{ interest.id }}">
+                
+                <!-- Profile Image -->
                 <img src="{% if interest.from_profile.matrimonial_profile.photos.first %}{{ interest.from_profile.matrimonial_profile.photos.first.image.url }}{% else %}{% static 'img/default-user.png' %}{% endif %}" 
-                     class="rounded-circle me-3" alt="Profile" width="50" height="50">
+                     class="rounded-circle me-2 mb-1 mb-md-0" alt="Profile" width="40" height="40">
 
-                <div class="flex-grow-1">
-                  <strong>{{ interest.from_profile.matrimonial_profile.full_name|default:interest.from_profile.user.username }}</strong>
-                  <br>
-                  <small class="text-muted">Sent on {{ interest.created_at|date:"M d, Y" }}</small>
+                <!-- Name & Date -->
+                <div class="flex-grow-1 small">
+                  <strong class="d-block" style="font-size:0.85rem;">
+                    {{ interest.from_profile.matrimonial_profile.full_name|default:interest.from_profile.user.username }}
+                  </strong>
+                  <small class="text-muted" style="font-size:0.75rem;">
+                    Sent on {{ interest.created_at|date:"M d, Y" }}
+                  </small>
                 </div>
 
-                <div>
+                <!-- Action Buttons -->
+                <div class="d-flex gap-1 mt-2 mt-md-0 flex-wrap flex-md-nowrap">
                   <a href="{% url 'profile_detail' interest.from_profile.matrimonial_profile.id %}" 
-                     class="btn btn-sm btn-outline-primary me-1">View</a>
+                     class="btn btn-sm btn-outline-primary" style="font-size:0.7rem; padding:0.25rem 0.5rem;">
+                    View
+                  </a>
 
                   <button type="button" 
-                          class="btn btn-sm btn-success action-btn"
+                          class="btn btn-sm btn-success action-btn" 
+                          style="font-size:0.7rem; padding:0.25rem 0.5rem;"
                           data-bs-toggle="modal" 
                           data-bs-target="#confirmActionModal"
                           data-action="accept"
@@ -418,7 +427,8 @@
                   </button>
 
                   <button type="button" 
-                          class="btn btn-sm btn-danger action-btn"
+                          class="btn btn-sm btn-danger action-btn" 
+                          style="font-size:0.7rem; padding:0.25rem 0.5rem;"
                           data-bs-toggle="modal" 
                           data-bs-target="#confirmActionModal"
                           data-action="reject"
@@ -427,16 +437,18 @@
                     Reject
                   </button>
                 </div>
+
               </li>
             {% endfor %}
           </ul>
         {% else %}
-          <p class="text-muted">No interests received yet.</p>
+          <p class="text-muted small mb-0">No interests received yet.</p>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
