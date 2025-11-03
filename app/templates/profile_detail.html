@@ -69,7 +69,11 @@
       <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
         <div>
           <h3 class="mb-1">{{ profile_obj.full_name }}</h3>
-          <div class="text-muted">{{ profile_obj.age }} yrs · {{ profile_obj.get_gender_display }}</div>
+          <div class="text-muted">
+            {{ profile_obj.age }} yrs · {{ profile_obj.get_gender_display }}
+            {# --- Show height just after age/gender --- #}
+            {% if profile_obj.height %} <span>· Height: {{ profile_obj.height }}</span>{% endif %}
+          </div>
         </div>
         <div class="text-end">
           <div class="badge-shakha mb-1">
@@ -100,6 +104,18 @@
         <div class="col-6">
           <div class="small-muted">Religion</div>
           <div class="fw-semibold">{{ profile_obj.religion|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Height</div>
+          <div class="fw-semibold">{{ profile_obj.height|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Caste</div>
+          <div class="fw-semibold">{{ profile_obj.caste|default:"-" }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small-muted">Star</div>
+          <div class="fw-semibold">{{ profile_obj.star|default:"-" }}</div>
         </div>
       </div>
 

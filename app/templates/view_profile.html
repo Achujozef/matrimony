@@ -302,6 +302,10 @@
             <div class="col-sm-6 col-12"><strong>Occupation:</strong> {{ profile.occupation }}</div>
             <div class="col-sm-6 col-12"><strong>Native Place:</strong> {{ profile.native_place }}</div>
             <div class="col-sm-6 col-12"><strong>Gender:</strong> {{ profile.get_gender_display }}</div>
+            <div class="col-sm-6 col-12"><strong>Height:</strong> {{ profile.height|default:"-" }}</div>
+            <div class="col-sm-6 col-12"><strong>Religion:</strong> {{ profile.religion|default:"-" }}</div>
+            <div class="col-sm-6 col-12"><strong>Caste:</strong> {{ profile.caste|default:"-" }}</div>
+            <div class="col-sm-6 col-12"><strong>Star:</strong> {{ profile.star|default:"-" }}</div>
           </div>
         </div>
 

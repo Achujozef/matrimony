@@ -52,6 +52,12 @@ class MatrimonialProfile(models.Model):
     father_name = models.CharField(max_length=200, blank=True)
     mother_name = models.CharField(max_length=200, blank=True)
     family_details = models.TextField(blank=True)
+    
+    # New fields
+    height = models.CharField(max_length=50, default='', blank=True)
+    religion = models.CharField(max_length=100, default='', blank=True)
+    caste = models.CharField(max_length=100, default='', blank=True)
+    star = models.CharField(max_length=100, default='', blank=True)
 
     # Privacy / visibility controls
     hide_photos_until_connection = models.BooleanField(default=True)

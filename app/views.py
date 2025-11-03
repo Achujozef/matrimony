@@ -950,6 +950,10 @@ def my_profile_view(request):
         matrimonial.father_name = request.POST.get("father_name", "")
         matrimonial.mother_name = request.POST.get("mother_name", "")
         matrimonial.family_details = request.POST.get("family_details", "")
+        matrimonial.height = request.POST.get("height", "")
+        matrimonial.religion = request.POST.get("religion", "")
+        matrimonial.caste = request.POST.get("caste", "")
+        matrimonial.star = request.POST.get("star", "")
         matrimonial.hide_photos_until_connection = bool(request.POST.get("hide_photos_until_connection"))
         matrimonial.hide_phone_until_connection = bool(request.POST.get("hide_phone_until_connection"))
         matrimonial.shakha_id = shakha_id if shakha_id else None
